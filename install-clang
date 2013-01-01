@@ -1,0 +1,276 @@
+#! /usr/bin/env bash
+#
+
+# Copy all output to log file.
+log=`basename $0`.$$.log
+
+echo "Recording log in $log ..."
+
+exec > >(tee $log)
+exec 2>&1
+
+# git version to checkout.
+version_llvm=release_32
+version_clang=release_32
+version_libcxx=release_32
+version_compilerrt=release_32
+version_libcxxabi=release_32
+version_libcxxrt=9a7ad5f           # Latest commit at time of writing.
+
+do_clone=1
+do_bootstrap=1
+
+OS=`uname`
+if [ "$OS" == "Linux" ]; then
+    use_libcxxabi=0
+    use_libcxxrt=1
+    triple=""
+    soext="so"
+    somask="so.%s"
+    addl_ldflags="-ldl"
+
+elif [ "$OS" == "Darwin" ]; then
+    use_libcxxabi=1
+    use_libcxxrt=0
+    triple="-apple-"
+    soext="dylib"
+    somask="%d.dylib"
+    addl_ldflags=""
+
+else
+    echo "OS $OS not supported by this script."
+    exit 1
+fi
+
+if [ "$1" = "--install" ]; then
+    mode=install
+fi
+
+if [ "$1" = "--update" ]; then
+    mode=update
+fi
+
+if [ $# != 2 -o "$mode" = "" ]; then
+    echo "usage: `basename $0` [--install|--update] <prefix>"
+    exit 1
+fi
+
+if [ ! -d $2 ]; then
+    echo "$2 does not exist."
+    exit 1
+fi
+
+function install_shared_lib
+{
+    src=$1
+    base=`basename $src`
+    lib=`ls $src.*$soext*`
+    major=`echo $lib | sed 's#.*\.\([0-9]\)\..*#\\1#g'`
+
+    if [ "$major" == "$lib" ]; then
+        major=1
+    fi
+
+    dest=$prefix/lib/$base.`printf $somask $major`
+    link=$prefix/lib/$base.$soext
+
+    # echo "src   : $src"
+    # echo "base  : $base"
+    # echo "lib   : $lib"
+    # echo "major : $major"
+    # echo "dest  : $dest"
+    # echo "link  : $link"
+
+    rm -f $dest $link
+    cp $lib $dest
+    ln -s $dest $link
+}
+
+prefix="$2"
+src="$2/src/llvm"
+
+# Built libraries with RTTI.
+export REQUIRES_RTTI=1
+
+export PATH=$prefix/bin:$PATH
+
+if [ "$mode" == "update" ]; then
+    for d in $prefix $prefix/bin $src; do
+        if [ ! -d $d ]; then
+            echo "$d does not exist."
+            exit 1
+        fi
+    done
+fi
+
+d=`dirname $0`
+patches=`cd $d; pwd`/patches
+
+if [ "${do_clone}" == "1" ]; then
+
+    # Get/update the repositories.
+    if [ "$mode" == "install" ]; then
+
+        test -d $src && echo "$src already exists, aborting" && exit 1
+        mkdir -p $src
+
+        echo Changing directory to `dirname $src` ...
+        cd `dirname $src`
+
+        git clone http://llvm.org/git/llvm.git `basename $src`
+        ( cd $src/tools && git clone http://llvm.org/git/clang.git )
+        ( cd $src/projects && git clone http://llvm.org/git/libcxx )
+        ( cd $src/projects && git clone http://llvm.org/git/compiler-rt )
+
+        ( cd $src && git checkout ${version_llvm} )
+        ( cd $src/tools/clang && git checkout ${version_clang}  )
+        ( cd $src/projects/libcxx && git checkout ${version_libcxx} )
+        ( cd $src/projects/compiler-rt && git checkout ${version_compilerrt} )
+
+        if [ "${use_libcxxabi}" == "1" ]; then
+            ( cd $src/projects && git clone http://llvm.org/git/libcxxabi )
+            ( cd $src/projects/libcxxabi && git checkout ${version_libcxxabi} )
+        fi
+
+        if [ "${use_libcxxrt}" == "1" ]; then
+            ( cd $src/projects && git clone https://github.com/pathscale/libcxxrt )
+            ( cd $src/projects/libcxxrt && git checkout ${version_libcxxrt} )
+        fi
+
+    else
+        echo Changing directory to `dirname $src` ...
+        cd `dirname $src`
+
+        ( cd $src && git pull --rebase )
+        ( cd $src/tools/clang && git pull --rebase )
+        ( cd $src/projects/libcxx && git pull --rebase )
+        ( cd $src/projects/compiler-rt && git pull --rebase )
+
+        ( cd $src && git checkout ${version_llvm} )
+        ( cd $src/tools/clang && git checkout ${version_clang}  )
+        ( cd $src/projects/libcxx && git checkout ${version_libcxx} )
+        ( cd $src/projects/compiler-rt && git checkout ${version_compilerrt} )
+
+        if [ "${use_libcxxabi}" == "1" ]; then
+            ( cd $src/projects/libcxxabi && git pull --rebase )
+            ( cd $src/projects/libcxxabi && git checkout ${version_libcxxabi} )
+        fi
+
+        if [ "${use_libcxxrt}" == "1" ]; then
+            ( cd $src/projects/libcxxabi && git pull --rebase )
+            ( cd $src/projects/libcxxabi && git checkout ${version_libcxxrt} )
+        fi
+    fi
+
+    # # Apply any patches we might need.
+    for i in $patches/*; do
+        echo Applying $i ...
+        b=`basename $i`
+        ( cd `echo $b | awk -v src=$src -F - '{printf("%s/%s/%s", src, $1, $2);}'` && pwd && cat $i | git am -3 )
+    done
+fi
+
+echo Changing directory to $src ...
+cd $src
+
+if [ "${do_bootstrap}" == "1" ]; then
+    # To bootstrap, compile and install LLVM and clang once.
+
+    if [ "$mode" == "install" ]; then
+
+          echo ===
+          echo === Building LLVM/clang, stage 1 ...
+          echo ===
+
+          ./configure --prefix=$prefix --enable-optimized
+          make clean
+          make -j 4
+          make install
+          make clean
+    fi
+fi
+
+clang_version=`$prefix/bin/clang++ --version 2>&1 | grep ^clang | awk '{print $3}'`
+libcxx_include=$prefix/lib/c++/v1
+mkdir -p $libcxx_include
+
+if [ "${use_libcxxabi}" == "1" ]; then
+    ### Build libc++abi with the new clang and install.
+    ### Note that even though it's in the llvm/projects directory, it's not automatically included in the built
+    ### as it doesn't provide a CMakeLists.txt yet.
+
+    echo ===
+    echo === Building libcxxabi ...
+    echo ===
+
+    ( cd projects/libcxxabi/lib && CXX=$prefix/bin/clang++ PREFIX=$prefix TRIPLE=$triple ./buildit )
+    cp -R projects/libcxxabi/include/* $libcxx_include
+    install_shared_lib projects/libcxxabi/lib/libc++abi
+
+    libcxx_clangxx="$prefix/bin/clang++"
+    libcxx_clang="$prefix/bin/clang"
+fi
+
+if [ "${use_libcxxrt}" == "1" ]; then
+    echo ===
+    echo === Building libcxxrt ...
+    echo ===
+
+    ( cd projects/libcxxrt && rm -rf build && mkdir build && cd build && cmake .. && make )
+    install_shared_lib projects/libcxxrt/build/lib/libcxxrt
+    cp projects/libcxxrt/src/*.h $libcxx_include
+
+    #rm -f $prefix/lib/libcxxrt.so.1
+    #rm -f $prefix/lib/libcxxrt.so
+    #ln -s $prefix/lib/libcxxrt.so.1.0 $prefix/lib/libcxxrt.so.1
+    #ln -s $prefix/lib/libcxxrt.so.1.0 $prefix/lib/libcxxrt.so
+
+    libcxx_clangxx="$prefix/bin/clang++ -I ../../libcxxrt/src -DLIBCXXRT"
+    libcxx_clang="$prefix/bin/clang -L../../libcxxrt/build/lib -lcxxrt" #sic
+    # libcxx_clang="$prefix/bin/clang ../../libcxxrt/build/lib/libcxxrt.a"
+
+fi
+
+### Build libc++ with the new clang, and then install.
+### Note that even though it's in the llvm/projects directory, it's not automatically included in the built.
+### (In fact, libcxx is explicitly *excluded* llvm/projects/CMakeLists.txt).
+
+echo ===
+echo === Building libc++ ...
+echo ===
+
+( cd projects/libcxx/lib && CXX="${libcxx_clangxx}" CC="${libcxx_clang}" PREFIX=$prefix TRIPLE=$triple ./buildit )
+cp -R projects/libcxx/include/* $libcxx_include
+install_shared_lib projects/libcxx/lib/libc++
+# rm -f $prefix/lib/libc++.dylib
+# ln -s $prefix/lib/libc++.1.dylib $prefix/lib/libc++.dylib
+
+# Now compile LLVM/clang with the new libaries.
+
+echo ===
+echo === Building LLVM/clang, stage 2 ...
+echo ===
+
+if [ "$mode" == "install" ]; then
+    make clean
+
+    if [ "${use_libcxxrt}" == "1" ]; then
+        addl_ldflags="${addl_ldflags} -lc++ -lcxxrt"
+        # addl_ldflags="${addl_ldflags} -lc++"
+    fi
+
+    CC=$prefix/bin/clang     \
+    CXX=$prefix/bin/clang++  \
+    CFLAGS="-L$prefix/lib"   \
+    CXXFLAGS="-L$prefix/lib" \
+    LDFLAGS="-L$prefix/lib -Wl,-rpath,$prefix/lib ${addl_ldflags}" \
+    ./configure --prefix=$prefix --enable-optimized --enable-libcpp
+
+fi
+
+make -j 4
+make install
+
+echo "===="
+echo "==== Complete log in $log"
+echo "===="

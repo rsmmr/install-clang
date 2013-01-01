@@ -1,0 +1,26 @@
+From 0864e93b9f1205bcaf9ab67b7c18323e9c1ec1ce Mon Sep 17 00:00:00 2001
+From: root <root@vette.icir.org>
+Date: Mon, 2 Apr 2012 22:17:27 -0700
+Subject: [PATCH] Adding InstalledDir + "/../lib/c++/v1 to include search
+ directory.
+
+---
+ lib/Driver/ToolChains.cpp |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/lib/Driver/ToolChains.cpp b/lib/Driver/ToolChains.cpp
+index 1eb7c9c..877f5ef 100644
+--- a/lib/Driver/ToolChains.cpp
++++ b/lib/Driver/ToolChains.cpp
+@@ -2251,7 +2251,7 @@ void Linux::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
+   if (GetCXXStdlibType(DriverArgs) == ToolChain::CST_Libcxx) {
+     // libc++ is always installed at a fixed path on Linux currently.
+     addSystemInclude(DriverArgs, CC1Args,
+-                     getDriver().SysRoot + "/usr/include/c++/v1");
++                     getDriver().InstalledDir + "/../lib/c++/v1");
+     return;
+   }
+ 
+-- 
+1.7.6
+

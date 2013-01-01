@@ -1,0 +1,25 @@
+From 19052b5ce8deed22f84fff54538160a214fd2088 Mon Sep 17 00:00:00 2001
+From: Robin Sommer <robin@icir.org>
+Date: Mon, 9 Apr 2012 21:13:21 -0700
+Subject: [PATCH] Removing libstdc++ from linker call.
+
+---
+ lib/buildit |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/lib/buildit b/lib/buildit
+index 0b1f6e5..5938a92 100755
+--- a/lib/buildit
++++ b/lib/buildit
+@@ -94,7 +94,7 @@ case $TRIPLE in
+     SOEXT=so
+     LDSHARED_FLAGS="-o libc++.so.1.0 \
+         -shared -nodefaultlibs -Wl,-soname,libc++.so.1 \
+-        -lpthread -lrt -lc -lstdc++"
++        -lpthread -lrt -lc"
+     ;;
+ esac
+ 
+-- 
+1.7.6
+

@@ -1,0 +1,37 @@
+From 49859310a4e01b7c85e8dd36be89d1056f1a7e4c Mon Sep 17 00:00:00 2001
+From: Robin Sommer <robin@icir.org>
+Date: Tue, 25 Dec 2012 16:31:04 -0800
+Subject: [PATCH] Adding a PREFIX option to change the dylib's install.
+
+---
+ lib/buildit | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/lib/buildit b/lib/buildit
+index 75a7028..cc83779 100755
+--- a/lib/buildit
++++ b/lib/buildit
+@@ -22,6 +22,11 @@ then
+     CC=clang
+ fi
+ 
++if [ -z "$PREFIX" ]
++then
++	PREFIX=/usr
++fi
++
+ if [ -z $RC_ProjectSourceVersion ]
+ then
+   RC_ProjectSourceVersion=1
+@@ -51,7 +56,7 @@ case $TRIPLE in
+         -dynamiclib -nodefaultlibs  \
+         -current_version ${RC_ProjectSourceVersion} \
+         -compatibility_version 1 \
+-        -install_name /usr/lib/libc++abi.dylib \
++        -install_name $PREFIX/lib/libc++abi.dylib \
+         -lSystem"
+ 	if [ -f "${SDKROOT}/usr/local/lib/libCrashReporterClient.a" ]
+ 	then
+-- 
+1.8.0.2
+

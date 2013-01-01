@@ -1,0 +1,57 @@
+
+=============
+install-clang
+=============
+
+This is a script that installs independent standalone versions of
+clang[1], LLVM[2], libc++[3], and compiler-rt[4], on Darwin and Linux.
+It links clang itself against libc++ and contains all of the
+installation within a given installation prefix (e.g., /opt/llvm),
+making it straight-forward to keep it separate from any already
+installed compiler and libraries.
+
+Usage:
+
+    ./install-clang --install <prefix>
+
+Once finished, just puth "<prefix>/bin" into your PATH.
+
+The script supports Linux and MacOS, and will install the 3.2 branches
+of the relevant llvm.org projects (versions can be changed). It
+downloads all the sources directly from their corresponding master git
+repositories, and compiles the pieces as needed.
+
+Doing a standalone installation is a bit messier than one would hope,
+and the scripts captures some trial-and-error I went through to get it
+working. Specifically:
+
+    - It compiles clang/LLVM twice, once to boostrap with the system
+      compiler and then with itself.
+
+    - It uses (and installs) libabi++[5] on Darwin but pathscale's
+      libcxxrt[6] on Linux.
+
+    - It patches clang to search libc++ headers relative to the
+      installation prefix.
+
+    - It patches the build scripts for libc++ and libc++abi to accept
+      prefix specification and fix some other stuff.
+
+I welcome any suggestions on making this process simpler. As I figured
+some of this out with older versions, there might be some parts to the
+setup that aren't necessary anymore. Maybe I'm also just missing the
+more straight-forward way somewhere.
+
+Note: the script also has an --update option that's supposed to catch
+up to upstream repository changes without doing the complete 2-stage
+compile/install again. However, that option hasn't been tried much
+recently and might be broken. By default, it also has no effect right
+now sicne the git versions to use are hardcoded. To try --update,
+change the versions found at the beginning of the script to "master".
+
+[1] http://clang.llvm.org
+[2] http://www.llvm.org
+[3] http://libcxx.llvm.org
+[4] http://compiler-rt.llvm.org
+[5] http://libcxxabi.llvm.org
+[6] https://github.com/pathscale/libcxxrt

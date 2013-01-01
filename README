@@ -3,33 +3,42 @@
 install-clang
 =============
 
-This is a script that installs independent standalone versions of
-clang[1], LLVM[2], libc++[3], and compiler-rt[4], on Darwin and Linux.
-It links clang itself against libc++ and contains all of the
-installation within a given installation prefix (e.g., /opt/llvm),
-making it straight-forward to keep it separate from any already
-installed compiler and libraries.
+This script installs self-contained standalone versions of clang[1],
+LLVM[2], libc++[3], and compiler-rt[4], on Darwin and Linux, including
+linking clang and LLVM against libc++ themselves. The script keeps all
+of the installation within a given target prefix (e.g., /opt/llvm),
+and hence separate from any already installed compilers, libraries,
+and include files. In particular, you can later deinstall everything
+easily by just deleting, e.g., /opt/llvm. Furthermore, as long as the
+prefix path is writable, the installation doesn't need root
+privileges.
 
 Usage:
 
     ./install-clang --install <prefix>
 
-Once finished, just puth "<prefix>/bin" into your PATH.
+Once finished, just prefix your PATH with "<prefix>/bin" and you're
+ready to use the new binaries. 
 
-The script supports Linux and MacOS, and will install the 3.2 branches
-of the relevant llvm.org projects (versions can be changed). It
+By default, install-clang currently installs the 3.2 branches of the
+relevant llvm.org projects; the versions can be changed by editing the
+definitions at the beginning of the script. The installation process
 downloads all the sources directly from their corresponding master git
-repositories, and compiles the pieces as needed.
+repositories and then compiles the pieces as needed. Other OSs than
+Darwin and Linux are not currently supported.
 
-Doing a standalone installation is a bit messier than one would hope,
-and the scripts captures some trial-and-error I went through to get it
-working. Specifically:
+Doing a self-contained clang/LLVM installation is a bit more messy
+than one would hope because the projects make assumptions about
+specific system-wide installation paths to use. The install-clang
+script captures some trial-and-error I went through to get an
+independent setup working. Specifically:
 
     - It compiles clang/LLVM twice, once to boostrap with the system
-      compiler and then with itself.
+      compiler and then again with itself linking against the new
+      libraries.
 
-    - It uses (and installs) libabi++[5] on Darwin but pathscale's
-      libcxxrt[6] on Linux.
+    - It uses libabi++[5] on Darwin but pathscale's libcxxrt[6] on
+      Linux.
 
     - It patches clang to search libc++ headers relative to the
       installation prefix.
@@ -37,17 +46,20 @@ working. Specifically:
     - It patches the build scripts for libc++ and libc++abi to accept
       prefix specification and fix some other stuff.
 
-I welcome any suggestions on making this process simpler. As I figured
-some of this out with older versions, there might be some parts to the
-setup that aren't necessary anymore. Maybe I'm also just missing the
-more straight-forward way somewhere.
+I welcome any suggestions on making this process simpler. As I
+originally figured some of this out with older versions, there might
+be some parts of the process that aren't necessary anymore.
+Furthermore, I may also just be missing a more straight-forward way
+somewhere.
 
-Note: the script also has an --update option that's supposed to catch
-up to upstream repository changes without doing the complete 2-stage
-compile/install again. However, that option hasn't been tried much
-recently and might be broken. By default, it also has no effect right
-now sicne the git versions to use are hardcoded. To try --update,
-change the versions found at the beginning of the script to "master".
+Note: the script also has an --update option that's allows to catch up
+with upstream repository changes without doing the complete 2-stage
+compile/install cycle again. However, that option hasn't been tried
+much recently and might be broken. By default it also has no immediate
+effect since the git versions to use are hardcoded to the LLVM/clang
+3.2 branches. If you want to try --update, change the versions at the
+beginning of the script to "master" (but again, update mode may just
+be broken right now).
 
 [1] http://clang.llvm.org
 [2] http://www.llvm.org

@@ -5,20 +5,20 @@ install-clang
 
 This script installs self-contained standalone versions of clang[1],
 LLVM[2], libc++[3], and compiler-rt[4], on Darwin and Linux, including
-linking clang and LLVM against libc++ themselves. The script keeps all
-of the installation within a given target prefix (e.g., /opt/llvm),
-and hence separate from any already installed compilers, libraries,
-and include files. In particular, you can later deinstall everything
-easily by just deleting, e.g., /opt/llvm. Furthermore, as long as the
-prefix path is writable, the installation doesn't need root
-privileges.
+linking clang and LLVM themselves against libc++ as well. The script
+keeps all of the installation within a given target prefix (e.g.,
+/opt/llvm), and hence separate from any already installed compilers,
+libraries, and include files. In particular, you can later deinstall
+everything easily by just deleting, e.g., /opt/llvm. Furthermore, as
+long as the prefix path is writable, the installation doesn't need
+root privileges.
 
 Usage:
 
     ./install-clang --install <prefix>
 
 Once finished, just prefix your PATH with "<prefix>/bin" and you're
-ready to use the new binaries. 
+ready to use the new binaries.
 
 By default, install-clang currently installs the 3.2 branches of the
 relevant llvm.org projects; the versions can be changed by editing the

@@ -220,15 +220,8 @@ if [ "${use_libcxxrt}" == "1" ]; then
     install_shared_lib projects/libcxxrt/build/lib/libcxxrt
     cp projects/libcxxrt/src/*.h $libcxx_include
 
-    #rm -f $prefix/lib/libcxxrt.so.1
-    #rm -f $prefix/lib/libcxxrt.so
-    #ln -s $prefix/lib/libcxxrt.so.1.0 $prefix/lib/libcxxrt.so.1
-    #ln -s $prefix/lib/libcxxrt.so.1.0 $prefix/lib/libcxxrt.so
-
     libcxx_clangxx="$prefix/bin/clang++ -I ../../libcxxrt/src -DLIBCXXRT"
-    libcxx_clang="$prefix/bin/clang -L../../libcxxrt/build/lib -lcxxrt" #sic
-    # libcxx_clang="$prefix/bin/clang ../../libcxxrt/build/lib/libcxxrt.a"
-
+    libcxx_clang="$prefix/bin/clang -L../../libcxxrt/build/lib -lcxxrt" # sic
 fi
 
 ### Build libc++ with the new clang, and then install.
@@ -242,8 +235,6 @@ echo ===
 ( cd projects/libcxx/lib && CXX="${libcxx_clangxx}" CC="${libcxx_clang}" PREFIX=$prefix TRIPLE=$triple ./buildit )
 cp -R projects/libcxx/include/* $libcxx_include
 install_shared_lib projects/libcxx/lib/libc++
-# rm -f $prefix/lib/libc++.dylib
-# ln -s $prefix/lib/libc++.1.dylib $prefix/lib/libc++.dylib
 
 # Now compile LLVM/clang with the new libaries.
 
@@ -256,7 +247,6 @@ if [ "$mode" == "install" ]; then
 
     if [ "${use_libcxxrt}" == "1" ]; then
         addl_ldflags="${addl_ldflags} -lc++ -lcxxrt"
-        # addl_ldflags="${addl_ldflags} -lc++"
     fi
 
     CC=$prefix/bin/clang     \

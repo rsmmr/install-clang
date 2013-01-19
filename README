@@ -15,10 +15,13 @@ root privileges.
 
 Usage:
 
-    ./install-clang --install <prefix>
+    > ./install-clang --install <prefix>
 
 Once finished, just prefix your PATH with "<prefix>/bin" and you're
-ready to use the new binaries.
+ready to use the new binaries:
+
+    > clang++ --std=c++11 --stdlib=libc++ test.cc -o a.out && ./a.out
+    Hello, Clang!
 
 By default, install-clang currently installs the 3.2 branches of the
 relevant llvm.org projects; the versions can be changed by editing the

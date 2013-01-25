@@ -11,12 +11,13 @@ diff --git a/lib/Driver/Tools.cpp b/lib/Driver/Tools.cpp
 index e37959b..d68e746 100644
 --- a/lib/Driver/Tools.cpp
 +++ b/lib/Driver/Tools.cpp
-@@ -187,6 +187,8 @@ static void AddLinkerInputs(const ToolChain &TC,
+@@ -187,6 +187,9 @@ static void AddLinkerInputs(const ToolChain &TC,
  
    // LIBRARY_PATH - included following the user specified library paths.
    addDirectoryList(Args, CmdArgs, "-L", "LIBRARY_PATH");
 +  CmdArgs.push_back(Args.MakeArgString("-L" + D.InstalledDir + "/../lib"));
-+  CmdArgs.push_back(Args.MakeArgString("-rpath=" + D.InstalledDir + "/../lib"));
++  CmdArgs.push_back("-rpath");
++  CmdArgs.push_back(Args.MakeArgString(D.InstalledDir + "/../lib"));
  }
  
  /// \brief Determine whether Objective-C automated reference counting is

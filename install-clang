@@ -1,14 +1,6 @@
 #! /usr/bin/env bash
 #
 
-# Copy all output to log file.
-log=`basename $0`.$$.log
-
-echo "Recording log in $log ..."
-
-exec > >(tee $log)
-exec 2>&1
-
 # git version to checkout.
 version_llvm=release_32
 version_clang=release_32
@@ -59,6 +51,12 @@ if [ ! -d $2 ]; then
     echo "$2 does not exist."
     exit 1
 fi
+
+# Copy all output to log file.
+log=`basename $0`.$$.log
+echo "Recording log in $log ..."
+exec > >(tee $log)
+exec 2>&1
 
 function install_shared_lib
 {

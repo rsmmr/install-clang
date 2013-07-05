@@ -1,28 +1,29 @@
-From 4622918718a6ed7af3e1d91b2110c99e2720f4af Mon Sep 17 00:00:00 2001
+From 96d68d5302b8e4d53b653717b5dbc8434cc447da Mon Sep 17 00:00:00 2001
 From: Robin Sommer <robin@icir.org>
-Date: Thu, 4 Jul 2013 16:42:14 -0700
-Subject: [PATCH] On Linux, link with -ldl automatically when --stdlib=libc++
- is given.
+Date: Sat, 19 Jan 2013 11:03:26 -0800
+Subject: [PATCH 2/2] On Linux, link with -lcxxrt and and -ldl automatically
+ when --stdlib=libc++ is given.
 
 ---
- lib/Driver/ToolChains.cpp | 10 ++++++++++
+ lib/Driver/ToolChains.cpp | 11 +++++++++++
  lib/Driver/ToolChains.h   |  3 +++
- 2 files changed, 13 insertions(+)
+ 2 files changed, 14 insertions(+)
 
 diff --git a/lib/Driver/ToolChains.cpp b/lib/Driver/ToolChains.cpp
-index fffba0e..8839f52 100644
+index 3e99381..0037355 100644
 --- a/lib/Driver/ToolChains.cpp
 +++ b/lib/Driver/ToolChains.cpp
-@@ -2604,6 +2604,16 @@ bool Linux::isPIEDefault() const {
-   return IsPIEDefault;
+@@ -2392,6 +2392,17 @@ void Linux::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
+   }
  }
  
 +void Linux::AddCXXStdlibLibArgs(const ArgList &Args,
-+                                ArgStringList &CmdArgs) const {
++                                 ArgStringList &CmdArgs) const {
 +
 +  ToolChain::AddCXXStdlibLibArgs(Args, CmdArgs);
 +
 +  if ( GetCXXStdlibType(Args) == ToolChain::CST_Libcxx ) {
++    CmdArgs.push_back("-lcxxrt");
 +    CmdArgs.push_back("-ldl");
 +  }
 +}
@@ -31,19 +32,19 @@ index fffba0e..8839f52 100644
  
  DragonFly::DragonFly(const Driver &D, const llvm::Triple& Triple, const ArgList &Args)
 diff --git a/lib/Driver/ToolChains.h b/lib/Driver/ToolChains.h
-index 3afd8dd..20dcdec 100644
+index 4c267e8..fa10891 100644
 --- a/lib/Driver/ToolChains.h
 +++ b/lib/Driver/ToolChains.h
-@@ -518,6 +518,9 @@ public:
+@@ -514,6 +514,9 @@ public:
+   virtual void AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
                                              ArgStringList &CC1Args) const;
-   virtual bool isPIEDefault() const;
  
 +  virtual void AddCXXStdlibLibArgs(const ArgList &Args,
 +                                   ArgStringList &CmdArgs) const;
 +
    std::string Linker;
    std::vector<std::string> ExtraOpts;
-   bool IsPIEDefault;
+ 
 -- 
-1.8.1.4
+1.7.11.7
 

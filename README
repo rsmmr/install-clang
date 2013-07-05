@@ -4,7 +4,7 @@ install-clang
 =============
 
 This script installs self-contained standalone versions of clang[1],
-LLVM[2], libc++[3], and compiler-rt[4], on Darwin and Linux, including
+LLVM[2], libc++[3], and compiler-rt[4] on Darwin and Linux, including
 linking clang and LLVM themselves against libc++ as well. The script
 keeps all of the installation within a given target prefix (e.g.,
 /opt/llvm), and hence separate from any already installed compilers,
@@ -23,7 +23,7 @@ ready to use the new binaries:
     > clang++ --std=c++11 --stdlib=libc++ test.cc -o a.out && ./a.out
     Hello, Clang!
 
-By default, install-clang currently installs the 3.2 branches of the
+By default, install-clang currently installs the 3.3 branches of the
 relevant llvm.org projects; the versions can be changed by editing the
 definitions at the beginning of the script. The installation process
 downloads all the sources directly from their corresponding master git
@@ -38,31 +38,29 @@ independent setup working. Specifically:
 
     - It compiles clang/LLVM twice, once to boostrap with the system
       compiler and then again with itself linking against the new
-      libraries.
+      libraries. (By default, it indeed compiles LLVM a third time
+      with assertions enabled. In the end, the installed LLVM
+      libraries have assertions enabled, while the clang binary has
+      not. The 3rd stage can be disabled at the beginning of the
+      script.)
 
-    - It uses libabi++[5] on Darwin but pathscale's libcxxrt[6] on
+    - It uses libabi++[5] on Darwin, and pathscale's libcxxrt[6] on
       Linux.
 
     - It patches clang to search libc++ headers relative to the
       installation prefix.
 
-    - It patches the build scripts for libc++ and libc++abi to accept
-      prefix specification and fix some other stuff.
-
-I welcome any suggestions on making this process simpler. As I
-originally figured some of this out with older versions, there might
-be some parts of the process that aren't necessary anymore.
-Furthermore, I may also just be missing a more straight-forward way
-somewhere.
+    - It patches the build script for libc++abi to accept a prefix
+      specification.
 
 Note: the script also has an --update option that's allows to catch up
 with upstream repository changes without doing the complete 2-stage
 compile/install cycle again. However, that option hasn't been tried
-much recently and might be broken. By default it also has no immediate
+recently and might be broken. By default it also has no immediate
 effect since the git versions to use are hardcoded to the LLVM/clang
-3.2 branches. If you want to try --update, change the versions at the
-beginning of the script to "master" (but again, update mode may just
-be broken right now).
+release versions. If you want to try --update, change the versions at
+the beginning of the script to "master" (but again, update mode may
+just be broken right now).
 
 [1] http://clang.llvm.org
 [2] http://www.llvm.org

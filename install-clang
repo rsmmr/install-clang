@@ -208,6 +208,7 @@ if [ "${do_bootstrap}" == "1" ]; then
             cd build-stage1 && \
             cmake -DCMAKE_BUILD_TYPE=Release \
                   -DLLVM_ENABLE_ASSERTIONS=off \
+                  -DLLVM_REQUIRES_RTTI=1 \
                   -DCMAKE_INSTALL_PREFIX=${prefix} \
                   -DC_INCLUDE_DIRS=${default_includes} \
                 .. && \
@@ -282,6 +283,7 @@ if [ "$mode" == "install" ]; then
       LDFLAGS="-L $libcxx_lib -Wl,-rpath,$libcxx_lib ${addl_ldflags}" \
       cmake -DCMAKE_BUILD_TYPE=Release \
             -DLLVM_ENABLE_ASSERTIONS=off \
+            -DLLVM_REQUIRES_RTTI=1 \
             -DCMAKE_INSTALL_PREFIX=${prefix} \
             -DC_INCLUDE_DIRS=${default_includes} \
             ..
@@ -304,6 +306,7 @@ if [ "${do_llvm_with_assertions}" == "1" ]; then
       LDFLAGS="-L $libcxx_lib -Wl,-rpath,$libcxx_lib ${addl_ldflags}" \
       cmake -DCMAKE_BUILD_TYPE=Release \
             -DLLVM_ENABLE_ASSERTIONS=on \
+            -DLLVM_REQUIRES_RTTI=1 \
             -DCMAKE_INSTALL_PREFIX=${prefix} \
             -DC_INCLUDE_DIRS=${default_includes} \
             -DLLVM_EXTERNAL_CLANG_BUILD=off \

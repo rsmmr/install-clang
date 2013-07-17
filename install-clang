@@ -21,6 +21,7 @@ version_libcxxrt=c61efa043           # Latest commit at time of writing.
 do_clone=1                 # If 0, skip the cloning (for testing only).
 do_bootstrap=1             # If 0, skip the 1st stage (for testing only).
 do_llvm_with_assertions=1  # If 1, build a 3rd stage LLVM with assertions enabled.
+do_llvm_with_debug=0       # If 1, build a 3rd stage LLVM in debug mode.
 
 OS=`uname`
 if [ "$OS" == "Linux" ]; then
@@ -292,7 +293,13 @@ fi
 
 ( cd build-stage2 && make -j 16 && make install )
 
-if [ "${do_llvm_with_assertions}" == "1" ]; then
+if [ "${do_llvm_with_assertions}" == "1" -o "${do_llvm_with_debug}" == "1" ]; then
+
+    build_type=RelWithDebInfo
+
+    if [ "${do_llvm_with_debug}" == "1" ]; then
+        build_type=Debug
+    fi
 
     echo ===
     echo === Building LLVM with assertions, stage 3 ...
@@ -304,7 +311,7 @@ if [ "${do_llvm_with_assertions}" == "1" ]; then
       CXX=$prefix/bin/clang++  \
       CXXFLAGS="-stdlib=libc++" \
       LDFLAGS="-L $libcxx_lib -Wl,-rpath,$libcxx_lib ${addl_ldflags}" \
-      cmake -DCMAKE_BUILD_TYPE=Release \
+      cmake -DCMAKE_BUILD_TYPE=${build_type} \
             -DLLVM_ENABLE_ASSERTIONS=on \
             -DLLVM_REQUIRES_RTTI=1 \
             -DCMAKE_INSTALL_PREFIX=${prefix} \

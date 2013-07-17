@@ -1,0 +1,25 @@
+From edf186a2c79f70b1f0de2d70c3f5201a6db15a72 Mon Sep 17 00:00:00 2001
+From: Robin Sommer <robin@icir.org>
+Date: Mon, 15 Jul 2013 17:39:30 -0700
+Subject: [PATCH] Fixing bug in SelectionDAG.
+
+---
+ lib/CodeGen/SelectionDAG/SelectionDAG.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/lib/CodeGen/SelectionDAG/SelectionDAG.cpp b/lib/CodeGen/SelectionDAG/SelectionDAG.cpp
+index 15235c8..042042a 100644
+--- a/lib/CodeGen/SelectionDAG/SelectionDAG.cpp
++++ b/lib/CodeGen/SelectionDAG/SelectionDAG.cpp
+@@ -3447,7 +3447,7 @@ static SDValue getMemsetStringVal(EVT VT, DebugLoc dl, SelectionDAG &DAG,
+   // If the "cost" of materializing the integer immediate is 1 or free, then
+   // it is cost effective to turn the load into the immediate.
+   const TargetTransformInfo *TTI = DAG.getTargetTransformInfo();
+-  if (TTI->getIntImmCost(Val, VT.getTypeForEVT(*DAG.getContext())) < 2)
++  if (TTI && TTI->getIntImmCost(Val, VT.getTypeForEVT(*DAG.getContext())) < 2)
+     return DAG.getConstant(Val, VT);
+   return SDValue(0, 0);
+ }
+-- 
+1.8.1.4
+

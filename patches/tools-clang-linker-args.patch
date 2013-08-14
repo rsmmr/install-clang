@@ -1,0 +1,29 @@
+From 7df2eaaf9023167d7af9be6887d9ce9a6e0b4e85 Mon Sep 17 00:00:00 2001
+From: Robin Sommer <robin@icir.org>
+Date: Sat, 19 Jan 2013 11:02:57 -0800
+Subject: [PATCH] Adapting linker arguments.
+
+    - Adding -L<prefix>/lib to default linker arguments.
+    - On Linux, and -rpath.
+---
+ lib/Driver/Tools.cpp | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/lib/Driver/Tools.cpp b/lib/Driver/Tools.cpp
+index ee75635..846091c 100644
+--- a/lib/Driver/Tools.cpp
++++ b/lib/Driver/Tools.cpp
+@@ -188,6 +188,10 @@ static void AddLinkerInputs(const ToolChain &TC,
+ 
+   // LIBRARY_PATH - included following the user specified library paths.
+   addDirectoryList(Args, CmdArgs, "-L", "LIBRARY_PATH");
++  CmdArgs.push_back(Args.MakeArgString("-L" + D.InstalledDir + "/../lib"));
++
++  if (TC.getTriple().getOS() == llvm::Triple::Linux)
++    CmdArgs.push_back(Args.MakeArgString("-rpath=" + D.InstalledDir + "/../lib"));
+ }
+ 
+ /// \brief Determine whether Objective-C automated reference counting is
+-- 
+1.8.3.4
+

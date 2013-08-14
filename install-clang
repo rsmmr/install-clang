@@ -9,14 +9,27 @@ echo "Recording log in $log ..."
 exec > >(tee $log)
 exec 2>&1
 
-# git version to checkout.
-version_llvm=release_33
-version_clang=release_33
-version_libcxx=release_33
-version_compilerrt=release_33
-version_libcxxabi=release_33
-# version_liblldb=release_33         # Compiling lldb doesn't work yet.
-version_libcxxrt=c61efa043           # Latest commit at time of writing.
+use_master=0
+
+if [ "${use_master}" != "1" ]; then
+    # git version to checkout.
+    version_llvm=release_33
+    version_clang=release_33
+    version_libcxx=release_33
+    version_compilerrt=release_33
+    version_libcxxabi=41458a0681f        # Latest commit at time of writing. No release_33 tag.
+    # version_liblldb=release_33         # Compiling lldb doesn't work yet.
+    version_libcxxrt=c61efa043           # Latest commit at time of writing.
+else
+    # git version to checkout.
+    version_llvm=master
+    version_clang=master
+    version_libcxx=master
+    version_compilerrt=master
+    version_libcxxabi=master
+    # version_liblldb=master
+    version_libcxxrt=master
+fi
 
 do_clone=1                 # If 0, skip the cloning (for testing only).
 do_bootstrap=1             # If 0, skip the 1st stage (for testing only).
@@ -70,7 +83,7 @@ unset LDFLAGS
 unset LD_LIBRARY_PATH
 unset DYLD_LIBRARY_PATH
 
-prefix="$2"
+prefix=`echo $2 | sed 's#/$##g'`
 libcxx_include=$prefix/include/c++/v1
 libcxx_lib=$prefix/lib
 
@@ -106,6 +119,8 @@ function install_shared_lib
     rm -f $dest $link
     cp $lib $dest
     ln -s $dest $link
+
+    echo $dest
 }
 
 # Built libraries with RTTI.
@@ -143,21 +158,17 @@ if [ "${do_clone}" == "1" ]; then
         ( cd $src/projects && git clone http://llvm.org/git/libcxx )
         ( cd $src/projects && git clone http://llvm.org/git/compiler-rt )
 
-        ( cd $src && git checkout ${version_llvm} )
-        ( cd $src/tools/clang && git checkout ${version_clang}  )
-        # ( cd $src/tools/lldb && git checkout ${version_lldb}  )
-        ( cd ${src_libcxx} && git checkout ${version_libcxx} )
-        ( cd ${src_compilerrt} && git checkout ${version_compilerrt} )
+        ( cd $src && git checkout -q ${version_llvm} )
+        ( cd $src/tools/clang && git checkout -q ${version_clang}  )
+        # ( cd $src/tools/lldb && git checkout -q ${version_lldb}  )
+        ( cd ${src_libcxx} && git checkout -q ${version_libcxx} )
+        ( cd ${src_compilerrt} && git checkout -q ${version_compilerrt} )
 
-        if [ "${use_libcxxabi}" == "1" ]; then
-            ( cd $src/projects && git clone http://llvm.org/git/libcxxabi )
-            ( cd ${src_libcxxabi} && git checkout ${version_libcxxabi} )
-        fi
+        ( cd $src/projects && git clone http://llvm.org/git/libcxxabi )
+        ( cd ${src_libcxxabi} && git checkout -q ${version_libcxxabi} )
 
-        if [ "${use_libcxxrt}" == "1" ]; then
-            ( cd $src/projects && git clone https://github.com/pathscale/libcxxrt )
-            ( cd ${src_libcxxrt} && git checkout ${version_libcxxrt} )
-        fi
+        ( cd $src/projects && git clone https://github.com/pathscale/libcxxrt )
+        ( cd ${src_libcxxrt} && git checkout -q ${version_libcxxrt} )
 
     else
         echo Changing directory to `dirname $src` ...
@@ -169,29 +180,28 @@ if [ "${do_clone}" == "1" ]; then
         ( cd ${src_libcxx} && git pull --rebase )
         ( cd ${src_compilerrt} && git pull --rebase )
 
-        ( cd $src && git checkout ${version_llvm} )
-        ( cd $src/tools/clang && git checkout ${version_clang}  )
-        # ( cd $src/tools/lldb && git checkout ${version_lldb}  )
-        ( cd ${src_libcxx} && git checkout ${version_libcxx} )
-        ( cd ${src_compilerrt} && git checkout ${version_compilerrt} )
+        ( cd $src && git checkout -q ${version_llvm} )
+        ( cd $src/tools/clang && git checkout -q ${version_clang}  )
+        # ( cd $src/tools/lldb && git checkout -q ${version_lldb}  )
+        ( cd ${src_libcxx} && git checkout -q ${version_libcxx} )
+        ( cd ${src_compilerrt} && git checkout -q ${version_compilerrt} )
 
-        if [ "${use_libcxxabi}" == "1" ]; then
-            ( cd ${src_libcxxabi} && git pull --rebase )
-            ( cd ${src_libcxxabi} && git checkout ${version_libcxxabi} )
-        fi
+        ( cd ${src_libcxxabi} && git pull --rebase )
+        ( cd ${src_libcxxabi} && git checkout -q ${version_libcxxabi} )
 
-        if [ "${use_libcxxrt}" == "1" ]; then
-            ( cd ${src_libcxxrt} && git pull --rebase )
-            ( cd ${src_libcxxrt} && git checkout ${version_libcxxrt} )
-        fi
+        ( cd ${src_libcxxrt} && git pull --rebase )
+        ( cd ${src_libcxxrt} && git checkout -q ${version_libcxxrt} )
     fi
 
     # # Apply any patches we might need.
     for i in $patches/*; do
         echo Applying $i ...
         b=`basename $i`
-        ( cd `echo $b | awk -v src=$src -F - '{printf("%s/%s/%s", src, $1, $2);}'` && pwd && cat $i | git am -3 )
+        ( cd $src; echo === $i; basename "$i" | grep -- '-' && cd `echo $b | awk -v src=$src -F - '{printf("%s/%s/%s", src, $1, $2);}'`; pwd; cat $i | git am -3 )
     done
+
+    echo === Done applying patches
+
 fi
 
 echo Changing directory to $src ...
@@ -231,13 +241,21 @@ if [ "${use_libcxxabi}" == "1" ]; then
     echo === Building libcxxabi ...
     echo ===
 
-    ( cd ${src_libcxxabi}/lib && CXX=$prefix/bin/clang++ PREFIX=$prefix TRIPLE=$triple ./buildit )
+    ( cd ${src_libcxxabi}/lib && CXX="$prefix/bin/clang++ -I${src_libcxx}/include" PREFIX=$prefix TRIPLE=$triple ./buildit )
     # cp -R ${src_libcxxabi}/include/* $libcxx_include
-    install_shared_lib ${src_libcxxabi}/lib/libc++abi
+    dylib=`install_shared_lib ${src_libcxxabi}/lib/libc++abi`
 
     libcxx_cxx="$prefix/bin/clang++"
     libcxx_cc="$prefix/bin/clang"
-    libcxx_cmake="-DLIBCXX_CXX_ABI=libcxxabi -DLIBCXX_LIBCXXABI_INCLUDE_PATHS=${src_libcxxrt}/include"
+
+    if [ "$OS" == "Darwin" ]; then
+        libcxx_ldflags="-reexport_library $dylib"
+        libcxx_ldflags="-sub_library libc++abi"
+    else
+        echo "lib++abi not supported on $OS"
+    fi
+
+    libcxx_cmake="-DLIBCXX_CXX_ABI=libcxxabi -DLIBCXX_LIBCXXABI_INCLUDE_PATHS=${src_libcxxabi}/include"
 fi
 
 if [ "${use_libcxxrt}" == "1" ]; then
@@ -320,9 +338,11 @@ if [ "${do_llvm_with_assertions}" == "1" -o "${do_llvm_with_debug}" == "1" ]; th
             -DLLVM_EXTERNAL_COMPILER_RT_BUILD=off \
             ..
     )
-fi
 
 ( cd build-stage3 && make -j 16 && make install )
+
+fi
+
 
 echo "===="
 echo "==== Complete log in $log"

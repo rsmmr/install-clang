@@ -1,14 +1,6 @@
 #! /usr/bin/env bash
 #
 
-# Copy all output to log file.
-log=`basename $0`.$$.log
-
-echo "Recording log in $log ..."
-
-exec > >(tee $log)
-exec 2>&1
-
 use_master=0
 
 if [ "${use_master}" != "1" ]; then
@@ -75,6 +67,12 @@ if [ ! -d $2 ]; then
     echo "$2 does not exist."
     exit 1
 fi
+
+# Copy all output to log file.
+log=`basename $0`.$$.log
+echo "Recording log in $log ..."
+exec > >(tee $log)
+exec 2>&1
 
 unset CFLAGS
 unset CXXFLAGS

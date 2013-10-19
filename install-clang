@@ -1,7 +1,7 @@
 #! /usr/bin/env bash
 #
 
-use_master=0
+use_master=1
 
 if [ "${use_master}" != "1" ]; then
     # git version to checkout.
@@ -23,8 +23,8 @@ else
     version_libcxxrt=master
 fi
 
-do_clone=1                 # If 0, skip the cloning (for testing only).
-do_bootstrap=1             # If 0, skip the 1st stage (for testing only).
+do_clone=0                 # If 0, skip the cloning (for testing only).
+do_bootstrap=0             # If 0, skip the 1st stage (for testing only).
 do_llvm_with_assertions=1  # If 1, build a 3rd stage LLVM with assertions enabled.
 do_llvm_with_debug=0       # If 1, build a 3rd stage LLVM in debug mode.
 
@@ -85,6 +85,8 @@ prefix=`echo $2 | sed 's#/$##g'`
 libcxx_include=$prefix/include/c++/v1
 libcxx_lib=$prefix/lib
 
+mkdir -p $libcxx_include
+
 src="$2/src/llvm"
 src_libcxxabi=${src}/projects/libcxxabi
 src_libcxxrt=${src}/projects/libcxxrt
@@ -92,6 +94,14 @@ src_libcxx=${src}/projects/libcxx
 src_compilerrt=${src}/projects/compiler-rt
 
 default_includes=${libcxx_include}:/usr/include
+
+if [ "${use_libcxxabi}" == "1" ]; then
+    libcxx_cmake="-DLIBCXX_CXX_ABI=libcxxabi -DLIBCXX_LIBCXXABI_INCLUDE_PATHS=${src_libcxxabi}/include"
+fi
+
+if [ "${use_libcxxrt}" == "1" ]; then
+    libcxx_cmake="-DLIBCXX_CXX_ABI=libcxxrt -DLIBCXX_LIBCXXRT_INCLUDE_PATHS=${src_libcxxrt}/src"
+fi
 
 function install_shared_lib
 {
@@ -205,31 +215,6 @@ fi
 echo Changing directory to $src ...
 cd $src
 
-if [ "${do_bootstrap}" == "1" ]; then
-    # To bootstrap, compile and install LLVM and clang once.
-
-    if [ "$mode" == "install" ]; then
-          echo ===
-          echo === Building LLVM/clang, stage 1 ...
-          echo ===
-
-          ( mkdir -p build-stage1 && \
-            cd build-stage1 && \
-            cmake -DCMAKE_BUILD_TYPE=Release \
-                  -DLLVM_ENABLE_ASSERTIONS=off \
-                  -DLLVM_REQUIRES_RTTI=1 \
-                  -DCMAKE_INSTALL_PREFIX=${prefix} \
-                  -DC_INCLUDE_DIRS=${default_includes} \
-                .. && \
-            make -j 16 && \
-            make install \
-          )
-    fi
-fi
-
-clang_version=`$prefix/bin/clang++ --version 2>&1 | grep ^clang | awk '{print $3}'`
-mkdir -p $libcxx_include
-
 if [ "${use_libcxxabi}" == "1" ]; then
     ### Build libc++abi with the new clang and install.
     ### Note that even though it's in the llvm/projects directory, it's not automatically included in the built
@@ -243,17 +228,17 @@ if [ "${use_libcxxabi}" == "1" ]; then
     # cp -R ${src_libcxxabi}/include/* $libcxx_include
     dylib=`install_shared_lib ${src_libcxxabi}/lib/libc++abi`
 
-    libcxx_cxx="$prefix/bin/clang++"
-    libcxx_cc="$prefix/bin/clang"
+    # libcxx_cxx="$prefix/bin/clang++"
+    # libcxx_cc="$prefix/bin/clang"
 
     if [ "$OS" == "Darwin" ]; then
-        libcxx_ldflags="-reexport_library $dylib"
-        libcxx_ldflags="-sub_library libc++abi"
+       libcxx_ldflags="-reexport_library $dylib"
+       libcxx_ldflags="-sub_library libc++abi"
     else
-        echo "lib++abi not supported on $OS"
+       echo "lib++abi not supported on $OS"
     fi
 
-    libcxx_cmake="-DLIBCXX_CXX_ABI=libcxxabi -DLIBCXX_LIBCXXABI_INCLUDE_PATHS=${src_libcxxabi}/include"
+    # libcxx_cmake="-DLIBCXX_CXX_ABI=libcxxabi -DLIBCXX_LIBCXXABI_INCLUDE_PATHS=${src_libcxxabi}/include"
 fi
 
 if [ "${use_libcxxrt}" == "1" ]; then
@@ -266,24 +251,48 @@ if [ "${use_libcxxrt}" == "1" ]; then
     # Remove shared library so that libcxx will link against the static version.
     rm -f ${src_libcxxrt}/build/lib/*.${soext}
 
-    libcxx_cxx="$prefix/bin/clang++"
-    libcxx_cc="$prefix/bin/clang"
+    # libcxx_cxx="$prefix/bin/clang++"
+    # libcxx_cc="$prefix/bin/clang"
     libcxx_ldflags="-L${src_libcxxrt}/build/lib"
-    libcxx_cmake="-DLIBCXX_CXX_ABI=libcxxrt -DLIBCXX_LIBCXXRT_INCLUDE_PATHS=${src_libcxxrt}/src"
+    # libcxx_cmake="-DLIBCXX_CXX_ABI=libcxxrt -DLIBCXX_LIBCXXRT_INCLUDE_PATHS=${src_libcxxrt}/src"
+fi
+
+if [ "${do_bootstrap}" == "1" ]; then
+    # To bootstrap, compile and install LLVM and clang once.
+
+    if [ "$mode" == "install" ]; then
+          echo ===
+          echo === Building LLVM/clang, stage 1 ...
+          echo ===
+
+          ( mkdir -p build-stage1 && \
+            cd build-stage1 && \
+            LDFLAGS="-L $libcxx_lib -Wl,-rpath,$libcxx_lib ${libcxx_ldflags} ${addl_ldflags}" \
+            cmake -DCMAKE_BUILD_TYPE=Release \
+                  -DLLVM_ENABLE_ASSERTIONS=off \
+                  -DLLVM_REQUIRES_RTTI=1 \
+                  -DCMAKE_INSTALL_PREFIX=${prefix} \
+                  -DC_INCLUDE_DIRS=${default_includes} \
+                  ${libcxx_cmake} \
+                .. && \
+            make -j 16 && \
+            make install \
+          )
+    fi
 fi
 
 ### Build libc++ with new clang and libcxx, and then install.
 ### Note that even though it's in the llvm/projects directory, it's not automatically included in the built.
 ### (In fact, libcxx is explicitly *excluded* llvm/projects/CMakeIndex.txt).
 
-echo ===
-echo === Building libc++ ...
-echo ===
-
-( cd ${src_libcxx} && rm -rf build && mkdir build && cd build &&
-  CC="${libcxx_cc}" CXX="${libcxx_cxx}" LDFLAGS="${libcxx_ldflags}" cmake ${libcxx_cmake} -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$prefix .. &&
-  make && make install
-)
+# echo ===
+# echo === Building libc++ ...
+# echo ===
+# 
+# ( cd ${src_libcxx} && rm -rf build && mkdir build && cd build &&
+#   CC="${libcxx_cc}" CXX="${libcxx_cxx}" LDFLAGS="${libcxx_ldflags}" cmake ${libcxx_cmake} -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$prefix .. &&
+#   make && make install
+# )
 
 # Now compile clang with the new libaries.
 
@@ -297,17 +306,20 @@ if [ "$mode" == "install" ]; then
       CC=$prefix/bin/clang     \
       CXX=$prefix/bin/clang++  \
       CXXFLAGS="-stdlib=libc++" \
-      LDFLAGS="-L $libcxx_lib -Wl,-rpath,$libcxx_lib ${addl_ldflags}" \
+      LDFLAGS="-L $libcxx_lib -Wl,-rpath,$libcxx_lib ${libcxx_ldflags} ${addl_ldflags}" \
       cmake -DCMAKE_BUILD_TYPE=Release \
             -DLLVM_ENABLE_ASSERTIONS=off \
             -DLLVM_REQUIRES_RTTI=1 \
             -DCMAKE_INSTALL_PREFIX=${prefix} \
             -DC_INCLUDE_DIRS=${default_includes} \
+            ${libcxx_cmake} \
             ..
     )
 fi
 
 ( cd build-stage2 && make -j 16 && make install )
+
+exit
 
 if [ "${do_llvm_with_assertions}" == "1" -o "${do_llvm_with_debug}" == "1" ]; then
 

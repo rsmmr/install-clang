@@ -6,4 +6,4 @@ if [ $# != 1 ]; then
 fi
 
 $1/bin/clang++ --std=c++11 --stdlib=libc++ test.cc -o a.out && ./a.out
-rm -f a.out
+#rm -f a.out

@@ -23,7 +23,7 @@ ready to use the new binaries:
     > clang++ --std=c++11 --stdlib=libc++ test.cc -o a.out && ./a.out
     Hello, Clang!
 
-By default, install-clang currently installs the 3.3 branches of the
+By default, install-clang currently installs the 3.4 (git) branches of the
 relevant llvm.org projects; the versions can be changed by editing the
 definitions at the beginning of the script. The installation process
 downloads all the sources directly from their corresponding master git
@@ -39,10 +39,10 @@ independent setup working. Specifically:
     - It compiles clang/LLVM twice, once to boostrap with the system
       compiler and then again with itself linking against the new
       libraries. (By default, it indeed compiles LLVM a third time
-      with assertions enabled. In the end, the installed LLVM
-      libraries have assertions enabled, while the clang binary has
-      not. The 3rd stage can be disabled at the beginning of the
-      script.)
+      with assertions enabled and debug information included. In the
+      end, the installed LLVM libraries have assertions enabled, while
+      the clang binary has not. The 3rd stage can be disabled at the
+      beginning of the script.)
 
     - It uses libabi++[5] on Darwin, and pathscale's libcxxrt[6] on
       Linux.

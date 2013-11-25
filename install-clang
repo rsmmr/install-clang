@@ -6,17 +6,18 @@
 #    - Bring back the update mode.
 #    - Try adding llvdb once again.
 
-use_master=1
+use_master=0
 
 if [ "${use_master}" != "1" ]; then
     # git version to checkout.
-    version_llvm=release_33
-    version_clang=release_33
-    version_libcxx=release_33
-    version_compilerrt=release_33
-    version_libcxxabi=41458a0681f        # Latest commit at time of writing. No release_33 tag.
-    # version_liblldb=release_33         # Compiling lldb doesn't work yet.
-    version_libcxxrt=c61efa043           # Latest commit at time of writing.
+    version_llvm=release_34
+    version_clang=release_34
+    version_libcxx=release_34
+    version_compilerrt=release_34
+    version_libcxxabi=master        # TODO: Insert Latest commit at time of writing. No release_33 tag.
+    # version_liblldb=release_33    # TODO: Compiling lldb doesn't work yet.
+    version_libcxxrt=master         # TODO: Insert Latest commit at time of writing. No release_33 tag.
+
 else
     # git version to checkout.
     version_llvm=master
@@ -28,7 +29,7 @@ else
     version_libcxxrt=master
 fi
 
-perform_clone=0            # If 0, skip the cloning (for testing only).
+perform_clone=1            # If 0, skip the cloning (for testing only).
 perform_abi=1              # If 0, skip libc++abi/libcxxrt  (for testing only).
 perform_stage1=1           # If 0, skip the 1st bootstrap stage (for testing only).
 perform_stage2=1           # If 0, skip the 2nd stage compiling LLVM/clang against libc++ (for testing only).

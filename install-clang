@@ -6,36 +6,6 @@
 #    - Bring back the update mode.
 #    - Try adding llvdb once again.
 
-use_master=0
-
-if [ "${use_master}" != "1" ]; then
-    # git version to checkout.
-    version_llvm=release_34
-    version_clang=release_34
-    version_libcxx=release_34
-    version_compilerrt=release_34
-    version_libcxxabi=master        # TODO: Insert Latest commit at time of writing. No release_33 tag.
-    # version_liblldb=release_33    # TODO: Compiling lldb doesn't work yet.
-    version_libcxxrt=master         # TODO: Insert Latest commit at time of writing. No release_33 tag.
-
-else
-    # git version to checkout.
-    version_llvm=master
-    version_clang=master
-    version_libcxx=master
-    version_compilerrt=master
-    version_libcxxabi=master
-    # version_liblldb=master
-    version_libcxxrt=master
-fi
-
-perform_clone=1            # If 0, skip the cloning (for testing only).
-perform_abi=1              # If 0, skip libc++abi/libcxxrt  (for testing only).
-perform_stage1=1           # If 0, skip the 1st bootstrap stage (for testing only).
-perform_stage2=1           # If 0, skip the 2nd stage compiling LLVM/clang against libc++ (for testing only).
-perform_stage3=1           # If 1, build a 3rd stage LLVM with assertions enabled.
-stage3_llvm_with_debug=0   # If 1, build the 3rd stage LLVM in debug mode.
-
 OS=`uname`
 if [ "$OS" == "Linux" ]; then
     use_libcxxabi=0
@@ -58,25 +28,83 @@ else
     exit 1
 fi
 
-if [ "$1" = "--install" ]; then
-    mode=install
+use_master=0
+perform_clone=1            # If 0, skip the cloning (for testing only).
+perform_abi=1              # If 0, skip libc++abi/libcxxrt  (for testing only).
+perform_stage1=1           # If 0, skip the 1st bootstrap stage (for testing only).
+perform_stage2=1           # If 0, skip the 2nd stage compiling LLVM/clang against libc++ (for testing only).
+perform_stage3=1           # If 1, build a 3rd stage LLVM with assertions enabled.
+stage3_llvm_with_debug=0   # If 1, build the 3rd stage LLVM in debug mode.
+
+usage()
+{
+    printf "usage: %s <opts> <prefix>\n" $(basename $0)
+}
+
+while getopts "a:iuh?" opt ; do
+    case "$opt" in
+        a)
+            if [ "$OPTARG" = "libcxxabi" ] ; then
+                use_libcxxabi=1
+                use_libcxxrt=0
+            elif [ "$OPTARG" = "libcxxrt" ] ; then
+                use_libcxxabi=0
+                use_libcxxrt=1
+            else
+                echo '-a requires either "libcxxabi" or "libcxxrt"'
+                exit 1
+            fi
+            ;;
+        h|\?)
+            usage
+            exit 0
+            ;;
+        i)
+            mode=install
+            ;;
+        u)
+            mode=update
+            ;;
+        m)
+            use_master=1
+            ;;
+    esac
+done
+
+shift $(expr $OPTIND - 1)
+prefix=`echo $1 | sed 's#/$##'`
+shift
+
+if [ "${use_master}" != "1" ]; then
+    # git version to checkout.
+    version_llvm=release_34
+    version_clang=release_34
+    version_libcxx=release_34
+    version_compilerrt=release_34
+    version_libcxxabi=master        # TODO: Insert Latest commit at time of writing. No release_33 tag.
+    # version_liblldb=release_33    # TODO: Compiling lldb doesn't work yet.
+    version_libcxxrt=master         # TODO: Insert Latest commit at time of writing. No release_33 tag.
+
+else
+    # git version to checkout.
+    version_llvm=master
+    version_clang=master
+    version_libcxx=master
+    version_compilerrt=master
+    version_libcxxabi=master
+    # version_liblldb=master
+    version_libcxxrt=master
 fi
 
-if [ "$1" = "--update" ]; then
-    mode=update
-fi
-
-if [ $# != 2 -o "$mode" = "" ]; then
-    echo "usage: `basename $0` [--install|--update] <prefix>"
+if [ "$mode" = "" -o "$prefix" = "" ]; then
+    usage
     exit 1
 fi
 
-if [ ! -d $2 ]; then
-    echo "$2 does not exist."
+if [ ! -d $prefix ]; then
+    echo "$prefix does not exist."
     exit 1
 fi
-
-prefix=`echo $2 | sed 's#/$##g'`
 
 if [ "$mode" == "update" ]; then
     for d in $prefix $prefix/bin $src; do
@@ -106,7 +134,7 @@ unset DYLD_LIBRARY_PATH
 export REQUIRES_RTTI=1
 export PATH=$prefix/bin:$PATH
 
-src="$2/src/llvm"
+src="$prefix/src/llvm"
 src_libcxxabi=${src}/projects/libcxxabi
 src_libcxxrt=${src}/projects/libcxxrt
 src_libcxx=${src}/projects/libcxx

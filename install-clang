@@ -28,6 +28,28 @@ else
     exit 1
 fi
 
+if [ -n "$CC" ]; then
+    cc=$CC
+elif which clang > /dev/null 2>&1; then
+    cc=clang
+elif which gcc > /dev/null 2>&1; then
+    cc=gcc
+else
+    echo could not find clang or gcc in '$PATH'
+    exit 1
+fi
+
+if [ -n "$CXX" ]; then
+    cxx=$CXX
+elif which clang++ > /dev/null 2>&1; then
+    cxx=clang++
+elif which g++ > /dev/null 2>&1; then
+    cxx=g++
+else
+    echo could not find clang++ or g++ in '$PATH'
+    exit 1
+fi
+
 use_master=0
 perform_clone=1            # If 0, skip the cloning (for testing only).
 perform_abi=1              # If 0, skip libc++abi/libcxxrt  (for testing only).
@@ -277,23 +299,12 @@ if [ "${perform_abi}" == "1" ]; then
         echo === Building libcxxabi ...
         echo ===
 
-        system_cxx="$prefix/bin/clang++"
-        if ! which ${system_cxx} > /dev/null 2>&1; then
-            if [ -n "$CXX" ] ; then
-                system_cxx="$CXX"
-            else
-                if which clang++ > /dev/null 2>&1; then
-                    system_cxx=clang++
-                elif which g++ > /dev/null 2>&1; then
-                    system_cxx=g++
-                else
-                    echo could not find clang++ or g++ in '$PATH'
-                    exit 1
-                fi
-            fi
+        if [ -x "$prefix/bin/clang++" ]; then
+            cxx="$prefix/bin/clang++"
+            cc="$prefix/bin/clang"      # We assume it exists as well.
         fi
 
-        ( cd ${src_libcxxabi}/lib && CXX="${system_cxx} -I${src_libcxx}/include" PREFIX=$prefix TRIPLE=$triple ./buildit )
+        ( cd ${src_libcxxabi}/lib && CXX="$cxx -I${src_libcxx}/include" PREFIX=$prefix TRIPLE=$triple ./buildit )
 
         if [ "$?" != "0" ] ; then
             echo Failed to build libcxxabi
@@ -339,8 +350,8 @@ fi
 # Stage 1 options.
 
 BUILD_TYPE_stage1=Release
-CC_stage1=""
-CXX_stage1=""
+CC_stage1="$cc"
+CXX_stage1="$cxx"
 CXXFLAGS_stage1=""
 CMAKE_stage1="-DLLVM_ENABLE_ASSERTIONS=off"
 

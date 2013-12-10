@@ -35,13 +35,14 @@ perform_stage1=1           # If 0, skip the 1st bootstrap stage (for testing onl
 perform_stage2=1           # If 0, skip the 2nd stage compiling LLVM/clang against libc++ (for testing only).
 perform_stage3=1           # If 1, build a 3rd stage LLVM with assertions enabled.
 stage3_llvm_with_debug=0   # If 1, build the 3rd stage LLVM in debug mode.
+parallelism=1              # The value X to pass to make -j X to build in parallel.
 
 usage()
 {
     printf "usage: %s <opts> <prefix>\n" $(basename $0)
 }
 
-while getopts "a:iuh?" opt ; do
+while getopts "a:ij:muh?" opt ; do
     case "$opt" in
         a)
             if [ "$OPTARG" = "libcxxabi" ] ; then
@@ -61,6 +62,9 @@ while getopts "a:iuh?" opt ; do
             ;;
         i)
             mode=install
+            ;;
+        j)
+            parallelism=$OPTARG
             ;;
         u)
             mode=update
@@ -263,6 +267,11 @@ if [ "${perform_abi}" == "1" ]; then
         echo ===
 
         ( cd ${src_libcxxabi}/lib && CXX="$prefix/bin/clang++ -I${src_libcxx}/include" PREFIX=$prefix TRIPLE=$triple ./buildit )
+
+        if [ "$?" != "0" ] ; then
+            echo Failed to build libcxxabi
+            exit 1
+        fi
     fi
 
     if [ "${use_libcxxrt}" == "1" ]; then
@@ -270,7 +279,12 @@ if [ "${perform_abi}" == "1" ]; then
         echo === Building libcxxrt ...
         echo ===
 
-        ( cd ${src_libcxxrt} && rm -rf build && mkdir build && cd build && CFLAGS="-fPIC" CXXFLAGS="-fPIC" cmake .. && make )
+        ( cd ${src_libcxxrt} && rm -rf build && mkdir build && cd build && CFLAGS="-fPIC" CXXFLAGS="-fPIC" cmake .. && make -j $parallelism)
+
+        if [ "$?" != "0" ] ; then
+            echo Failed to build libcxxrt
+            exit 1
+        fi
 
         # Remove shared library so that libcxx will link against the static version.
         rm -f ${src_libcxxrt}/build/lib/*.${soext}
@@ -351,7 +365,7 @@ for stage in 1 2 3; do
              ${addl_cmake} \
              `st CMAKE` \
              .. && \
-       make -j 16 && \
+       make -j $parallelism && \
        make install \
      )
 

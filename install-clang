@@ -348,9 +348,10 @@ if [ "${use_libcxxabi}" == "1" ]; then
 
     if [ "$OS" == "Darwin" ]; then
        addl_ldflags="${addl_ldflags} -reexport_library $dylib"
-       addl_ldflags="${addl_ldflags} -sub_library libc++abi"
+       addl_ldflags="${addl_ldflags} -sub_library"
     fi
 
+    addl_ldflags="${addl_ldflags} -lc++abi"
     addl_cmake="${addl_cmake} -DLIBCXX_CXX_ABI=libcxxabi -DLIBCXX_LIBCXXABI_INCLUDE_PATHS=${src_libcxxabi}/include"
 fi
 

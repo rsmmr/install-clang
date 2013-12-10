@@ -277,7 +277,23 @@ if [ "${perform_abi}" == "1" ]; then
         echo === Building libcxxabi ...
         echo ===
 
-        ( cd ${src_libcxxabi}/lib && CXX="$prefix/bin/clang++ -I${src_libcxx}/include" PREFIX=$prefix TRIPLE=$triple ./buildit )
+        system_cxx="$prefix/bin/clang++"
+        if ! which ${system_cxx} > /dev/null 2>&1; then
+            if [ -n "$CXX" ] ; then
+                system_cxx="$CXX"
+            else
+                if which clang++ > /dev/null 2>&1; then
+                    system_cxx=clang++
+                elif which g++ > /dev/null 2>&1; then
+                    system_cxx=g++
+                else
+                    echo could not find clang++ or g++ in '$PATH'
+                    exit 1
+                fi
+            fi
+        fi
+
+        ( cd ${src_libcxxabi}/lib && CXX="${system_cxx} -I${src_libcxx}/include" PREFIX=$prefix TRIPLE=$triple ./buildit )
 
         if [ "$?" != "0" ] ; then
             echo Failed to build libcxxabi

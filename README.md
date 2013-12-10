@@ -52,8 +52,8 @@ independent setup working. Specifically:
     - It patches the build script for libc++abi to accept a prefix
       specification.
 
-**Note**: the script also has an `--update` option that's allows to
-catch up with upstream repository changes without doing the complete
+**Note**: the script also has an `--update` option that allows for
+catching up with upstream repository changes without doing the complete
 2-stage compile/install cycle again. However, that option hasn't been
 tried recently and might be broken. By default it also has no immediate
 effect since the git versions to use are hardcoded to the LLVM/clang

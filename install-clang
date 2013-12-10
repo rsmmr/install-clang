@@ -64,7 +64,7 @@ usage()
     printf "usage: %s <opts> <prefix>\n" $(basename $0)
 }
 
-while getopts "a:ij:muh?" opt ; do
+while getopts "a:ij:ms:uh?" opt ; do
     case "$opt" in
         a)
             if [ "$OPTARG" == "libcxxabi" ] ; then
@@ -88,11 +88,29 @@ while getopts "a:ij:muh?" opt ; do
         j)
             parallelism=$OPTARG
             ;;
-        u)
-            mode=update
-            ;;
         m)
             use_master=1
+            ;;
+        s)
+            if [ "$OPTARG" == "1" ] ; then
+                perform_stage1=1
+                perform_stage2=1
+                perform_stage3=1
+            elif [ "$OPTARG" == "2" ] ; then
+                perform_stage1=0
+                perform_stage2=1
+                perform_stage3=1
+            elif [ "$OPTARG" == "3" ] ; then
+                perform_stage1=0
+                perform_stage2=0
+                perform_stage3=1
+            else
+                echo 'stage parameter must be in [1,3].'
+                exit 1
+            fi
+            ;;
+        u)
+            mode=update
             ;;
     esac
 done

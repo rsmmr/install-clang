@@ -35,22 +35,22 @@ specific system-wide installation paths to use. The install-clang
 script captures some trial-and-error I went through to get an
 independent setup working. Specifically:
 
-    - It compiles clang/LLVM twice, once to boostrap with the system
-      compiler and then again with itself linking against the new
-      libraries. (By default, it indeed compiles LLVM a third time
-      with assertions enabled and debug information included. In the
-      end, the installed LLVM libraries have assertions enabled, while
-      the clang binary has not. The 3rd stage can be disabled at the
-      beginning of the script.)
+- It compiles clang/LLVM twice, once to boostrap with the system
+  compiler and then again with itself linking against the new
+  libraries. (By default, it indeed compiles LLVM a third time
+  with assertions enabled and debug information included. In the
+  end, the installed LLVM libraries have assertions enabled, while
+  the clang binary has not. The 3rd stage can be disabled at the
+  beginning of the script.)
 
-    - It uses [libabi++][5] on Darwin, and pathscale's [libcxxrt][6] on
-      Linux.
+- It uses [libabi++][5] on Darwin, and pathscale's [libcxxrt][6] on
+  Linux.
 
-    - It patches clang to search libc++ headers relative to the
-      installation prefix.
+- It patches clang to search libc++ headers relative to the
+  installation prefix.
 
-    - It patches the build script for libc++abi to accept a prefix
-      specification.
+- It patches the build script for libc++abi to accept a prefix
+  specification.
 
 **Note**: the script also has an `--update` option that allows for
 catching up with upstream repository changes without doing the complete

@@ -106,8 +106,15 @@ if [ "$mode" = "" -o "$prefix" = "" ]; then
 fi
 
 if [ ! -d $prefix ]; then
-    echo "$prefix does not exist."
-    exit 1
+    if [ "$mode" == "install" ]; then
+        if ! mkdir -p $prefix; then
+            echo failed to create directory $prefix
+            exit 1
+        fi
+    else
+        echo $prefix does not exist
+        exit 1
+    fi
 fi
 
 if [ "$mode" == "update" ]; then

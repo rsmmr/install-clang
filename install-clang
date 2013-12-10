@@ -204,13 +204,9 @@ function install_shared_lib
     # echo "dest  : $dest"
     # echo "link  : $link"
 
-    if test -d $libcxx_lib; then
-        rm -f $dest $link
-        cp $lib $dest
-        ln -s $dest $link
-    else
-        mkdir $libcxx_lib
-    fi
+    test -d $libcxx_lib && rm -f $dest $link || mkdir $libcxx_lib
+    cp $lib $dest
+    ln -s $dest $link
 
     echo $dest
 }

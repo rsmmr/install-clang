@@ -121,9 +121,9 @@ shift
 
 if [ "${use_master}" != "1" ]; then
     # git version to checkout.
-    version_llvm=release_34
-    version_clang=release_34
-    version_libcxx=release_34
+    version_llvm=4062ed87621c6      # Fixes compatibility issue with clang 3.4.
+    version_clang=24df0f449fa6723b7 # Latest version of MicrosoftMangle.cpp
+    version_libcxx=37d0212c5        # Fixes a bug that prevents building with GCC 4.6.
     version_compilerrt=release_34
     version_libcxxabi=master        # TODO: Insert Latest commit at time of writing. No release_33 tag.
     # version_liblldb=release_33    # TODO: Compiling lldb doesn't work yet.

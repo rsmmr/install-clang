@@ -45,10 +45,10 @@ usage()
 while getopts "a:ij:muh?" opt ; do
     case "$opt" in
         a)
-            if [ "$OPTARG" = "libcxxabi" ] ; then
+            if [ "$OPTARG" == "libcxxabi" ] ; then
                 use_libcxxabi=1
                 use_libcxxrt=0
-            elif [ "$OPTARG" = "libcxxrt" ] ; then
+            elif [ "$OPTARG" == "libcxxrt" ] ; then
                 use_libcxxabi=0
                 use_libcxxrt=1
             else
@@ -100,7 +100,7 @@ else
     version_libcxxrt=master
 fi
 
-if [ "$mode" = "" -o "$prefix" = "" ]; then
+if [ "$mode" == "" -o "$prefix" == "" ]; then
     usage
     exit 1
 fi
@@ -304,8 +304,6 @@ if [ "${use_libcxxabi}" == "1" ]; then
     if [ "$OS" == "Darwin" ]; then
        addl_ldflags="${addl_ldflags} -reexport_library $dylib"
        addl_ldflags="${addl_ldflags} -sub_library libc++abi"
-    else
-       echo "lib++abi not supported on $OS"
     fi
 
     addl_cmake="${addl_cmake} -DLIBCXX_CXX_ABI=libcxxabi -DLIBCXX_LIBCXXABI_INCLUDE_PATHS=${src_libcxxabi}/include"

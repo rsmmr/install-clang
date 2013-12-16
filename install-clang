@@ -14,9 +14,9 @@ if [ "${use_master}" != "1" ]; then
     version_clang=release_34
     version_libcxx=release_34
     version_compilerrt=release_34
-    version_libcxxabi=master        # TODO: Insert Latest commit at time of writing. No release_33 tag.
-    # version_liblldb=release_33    # TODO: Compiling lldb doesn't work yet.
-    version_libcxxrt=master         # TODO: Insert Latest commit at time of writing. No release_33 tag.
+    version_libcxxabi=753a30dd      # Latest commit at time of writing. No release_33 tag.
+    # version_liblldb=release_33    # TODO: Compiling lldb didn't work last time I tried.
+    version_libcxxrt=800610         # Latest commit at time of writing.
 
 else
     # git version to checkout.

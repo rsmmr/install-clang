@@ -61,7 +61,20 @@ parallelism=1              # The value X to pass to make -j X to build in parall
 
 usage()
 {
-    printf "usage: %s <opts> <prefix>\n" $(basename $0)
+    printf "usage: %s <options> <prefix>\n" $(basename $0)
+    echo ''
+    echo 'available options:'
+    echo '    -a <abi>   ABI to use [libcxxrt or libcxxabi]'
+    echo '    -i         install into <prefix>'
+    echo '    -j <n>     build with <n> threads in parallel'
+    echo '    -m         use git/master instead of chosen commits'
+    echo '    -s <stage> begin build from <stage> [1, 2, 3]'
+    echo '    -u         update an existing build in <prefix>'
+    echo '    -h|-?      display this help'
+    echo ''
+    echo 'environment variables:'
+    echo '    CC         path to the C compiler'
+    echo '    CXX        path to the C++ compiler'
 }
 
 while getopts "a:ij:ms:uh?" opt ; do

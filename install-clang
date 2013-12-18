@@ -434,6 +434,12 @@ for stage in 1 2 3; do
        make install \
      )
 
+    if [ "$?" != "0" ] ; then
+        echo ===
+        echo === Faild building LLVM/clang at stage ${stage}
+        echo ===
+        exit 1
+    fi
 done
 
 echo "===="

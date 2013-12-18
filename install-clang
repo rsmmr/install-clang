@@ -134,13 +134,13 @@ shift
 
 if [ "${use_master}" != "1" ]; then
     # git version to checkout.
-    version_llvm=4062ed87621c6      # Fixes compatibility issue with clang 3.4.
-    version_clang=24df0f449fa6723b7 # Latest version of MicrosoftMangle.cpp
-    version_libcxx=37d0212c5        # Fixes a bug that prevents building with GCC 4.6.
+    version_llvm=release_34
+    version_clang=release_34
+    version_libcxx=release_34
     version_compilerrt=release_34
-    version_libcxxabi=master        # TODO: Insert Latest commit at time of writing. No release_33 tag.
-    # version_liblldb=release_33    # TODO: Compiling lldb doesn't work yet.
-    version_libcxxrt=master         # TODO: Insert Latest commit at time of writing. No release_33 tag.
+    version_libcxxabi=753a30dd      # Latest commit at time of writing.
+    version_libcxxrt=800610         # Latest commit at time of writing.
+    version_liblldb=release_34
 
 else
     # git version to checkout.
@@ -149,8 +149,8 @@ else
     version_libcxx=master
     version_compilerrt=master
     version_libcxxabi=master
-    # version_liblldb=master
     version_libcxxrt=master
+    version_liblldb=master
 fi
 
 if [ "$mode" == "" -o "$prefix" == "" ]; then

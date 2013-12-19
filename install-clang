@@ -357,13 +357,15 @@ if [ "${perform_abi}" == "1" ]; then
 fi
 
 if [ "${use_libcxxabi}" == "1" ]; then
-    dylib=`install_shared_lib ${src_libcxxabi}/lib/libc++abi`
 
     if [ "$OS" == "Darwin" ]; then
-       addl_ldflags="${addl_ldflags} -reexport_library $dylib"
-       addl_ldflags="${addl_ldflags} -sub_library libc++abi"
+        dylib=`install_shared_lib ${src_libcxxabi}/lib/libc++abi`
+        addl_ldflags="${addl_ldflags} -reexport_library $dylib"
+        addl_ldflags="${addl_ldflags} -sub_library libc++abi"
     else
-       addl_ldflags="${addl_ldflags} -lc++abi"
+        libcxxabi_static=libc++abi.a
+        test -d $libcxx_lib || mkdir -p $libcxx_lib
+        cp -v $src_libcxxabi/lib/$libcxxabi_static $libcxx_lib
     fi
 
     addl_cmake="${addl_cmake} -DLIBCXX_CXX_ABI=libcxxabi -DLIBCXX_LIBCXXABI_INCLUDE_PATHS=${src_libcxxabi}/include"

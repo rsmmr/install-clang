@@ -170,14 +170,14 @@ if [ ! -d $prefix ]; then
     fi
 fi
 
-if [ "$mode" == "update" ]; then
-    for d in $prefix $prefix/bin $src; do
-        if [ ! -d $d ]; then
-            echo "$d does not exist."
-            exit 1
-        fi
-    done
-fi
+#if [ "$mode" == "update" ]; then
+#    for d in $prefix $prefix/bin $src; do
+#        if [ ! -d $d ]; then
+#            echo "$d does not exist."
+#            exit 1
+#        fi
+#    done
+#fi
 
 #### Copy all output to log file.
 log=`basename $0`.$$.log

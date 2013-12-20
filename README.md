@@ -14,7 +14,29 @@ privileges.
 Usage
 -----
 
-    > ./install-clang --install <prefix>
+To see the available options, use `-h`:
+
+    > ./install-clang -h
+    usage: install-clang <options> <prefix>
+
+    available options:
+        -a <abi>   ABI to use [libcxxrt or libcxxabi]
+        -i         install into <prefix>
+        -j <n>     build with <n> threads in parallel
+        -l         attempt to build LLDB
+        -m         use git/master instead of chosen commits
+        -s <stage> begin build from <stage> [1, 2, 3]
+        -u         update an existing build in <prefix>
+        -h|-?      display this help
+
+    environment variables:
+        CC         path to the C compiler
+        CXX        path to the C++ compiler
+
+For example, to build Clang with libc++abi on a machine with multiple
+cores and install it in `/opt/llvm`, you can use:
+
+    > ./install-clang -i -a libcxxabi -j 16 /opt/llvm
 
 Once finished, just prefix your PATH with `<prefix>/bin` and you're
 ready to use the new binaries:
@@ -22,12 +44,21 @@ ready to use the new binaries:
     > clang++ --std=c++11 --stdlib=libc++ test.cc -o a.out && ./a.out
     Hello, Clang!
 
-By default, install-clang currently installs the 3.4 (git) branches of the
-relevant llvm.org projects; the versions can be changed by editing the
-definitions at the beginning of the script. The installation process
-downloads all the sources directly from their corresponding master git
-repositories and then compiles the pieces as needed. Other OSs than
+By default, install-clang currently installs the 3.4 (git) branches of
+the relevant llvm.org projects. Adding `-m` on the command line
+instructs the script to use the current master version instead. The
+script then downloads all the sources from the corresponding git
+repositories and compiles the pieces as needed. Other OSs than
 Darwin and Linux are not currently supported.
+
+The script also has an update option `-u` that allows for catching up
+with upstream repository changes without doing the complete
+2-stage compile/install cycle again. Unless coupled with `-m`, this flag
+has no immediate effect since the git versions to use are hardcoded to
+the LLVM/clang release versions.
+
+Details
+-------
 
 Doing a self-contained clang/LLVM installation is a bit more messy
 than one would hope because the projects make assumptions about
@@ -43,23 +74,15 @@ independent setup working. Specifically:
   the clang binary has not. The 3rd stage can be disabled at the
   beginning of the script.)
 
-- It uses [libabi++][5] on Darwin, and pathscale's [libcxxrt][6] on
-  Linux.
+- By default, it uses [libabi++][5] on Darwin, and pathscale's
+  [libcxxrt][6] on Linux, but also allows for manually specifiying an
+  ABI via the `-a` switch.
 
 - It patches clang to search libc++ headers relative to the
   installation prefix.
 
 - It patches the build script for libc++abi to accept a prefix
   specification.
-
-**Note**: the script also has an `--update` option that allows for
-catching up with upstream repository changes without doing the complete
-2-stage compile/install cycle again. However, that option hasn't been
-tried recently and might be broken. By default it also has no immediate
-effect since the git versions to use are hardcoded to the LLVM/clang
-release versions. If you want to try `--update`, change the versions at
-the beginning of the script to "master" (but again, update mode may just
-be broken right now).
 
 [1]: http://clang.llvm.org
 [2]: http://www.llvm.org

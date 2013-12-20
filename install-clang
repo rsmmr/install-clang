@@ -56,6 +56,7 @@ perform_abi=1              # If 0, skip libc++abi/libcxxrt  (for testing only).
 perform_stage1=1           # If 0, skip the 1st bootstrap stage (for testing only).
 perform_stage2=1           # If 0, skip the 2nd stage compiling LLVM/clang against libc++ (for testing only).
 perform_stage3=1           # If 1, build a 3rd stage LLVM with assertions enabled.
+perform_lldb_build=0       # If 1, attempt to build LLDB.
 stage3_llvm_with_debug=0   # If 1, build the 3rd stage LLVM in debug mode.
 parallelism=1              # The value X to pass to make -j X to build in parallel.
 
@@ -67,6 +68,7 @@ usage()
     echo '    -a <abi>   ABI to use [libcxxrt or libcxxabi]'
     echo '    -i         install into <prefix>'
     echo '    -j <n>     build with <n> threads in parallel'
+    echo '    -l         attempt to build LLDB'
     echo '    -m         use git/master instead of chosen commits'
     echo '    -s <stage> begin build from <stage> [1, 2, 3]'
     echo '    -u         update an existing build in <prefix>'
@@ -77,7 +79,7 @@ usage()
     echo '    CXX        path to the C++ compiler'
 }
 
-while getopts "a:ij:ms:uh?" opt ; do
+while getopts "a:ij:lms:uh?" opt ; do
     case "$opt" in
         a)
             if [ "$OPTARG" == "libcxxabi" ] ; then
@@ -100,6 +102,9 @@ while getopts "a:ij:ms:uh?" opt ; do
             ;;
         j)
             parallelism=$OPTARG
+            ;;
+        l)
+            perform_lldb_build=1
             ;;
         m)
             use_master=1
@@ -140,7 +145,7 @@ if [ "${use_master}" != "1" ]; then
     version_compilerrt=release_34
     version_libcxxabi=753a30dd      # Latest commit at time of writing.
     version_libcxxrt=800610         # Latest commit at time of writing.
-    version_liblldb=release_34
+    version_lldb=release_34
 
 else
     # git version to checkout.
@@ -150,7 +155,7 @@ else
     version_compilerrt=master
     version_libcxxabi=master
     version_libcxxrt=master
-    version_liblldb=master
+    version_lldb=master
 fi
 
 if [ "$mode" == "" -o "$prefix" == "" ]; then
@@ -262,13 +267,12 @@ if [ "${perform_clone}" == "1" ]; then
         git clone http://llvm.org/git/llvm.git `basename $src`
 
         ( cd $src/tools && git clone http://llvm.org/git/clang.git )
-        # ( cd $src/tools && git clone http://llvm.org/git/lldb.git )
+        ( cd $src/tools && git clone http://llvm.org/git/lldb.git )
         ( cd $src/projects && git clone http://llvm.org/git/libcxx )
         ( cd $src/projects && git clone http://llvm.org/git/compiler-rt )
 
         ( cd $src && git checkout -q ${version_llvm} )
         ( cd $src/tools/clang && git checkout -q ${version_clang}  )
-        # ( cd $src/tools/lldb && git checkout -q ${version_lldb}  )
         ( cd ${src_libcxx} && git checkout -q ${version_libcxx} )
         ( cd ${src_compilerrt} && git checkout -q ${version_compilerrt} )
 
@@ -278,19 +282,20 @@ if [ "${perform_clone}" == "1" ]; then
         ( cd $src/projects && git clone https://github.com/pathscale/libcxxrt )
         ( cd ${src_libcxxrt} && git checkout -q ${version_libcxxrt} )
 
+        if [ "${perform_lldb_build}" == "1" ]; then
+            ( cd $src/tools/lldb && git checkout -q ${version_lldb}  )
+        fi
     else
         echo Changing directory to `dirname $src` ...
         cd `dirname $src`
 
         ( cd ${src} && git pull --rebase )
         ( cd ${src}/tools/clang && git pull --rebase )
-        # ( cd ${src}/tools/lldb && git pull --rebase )
         ( cd ${src_libcxx} && git pull --rebase )
         ( cd ${src_compilerrt} && git pull --rebase )
 
         ( cd $src && git checkout -q ${version_llvm} )
         ( cd $src/tools/clang && git checkout -q ${version_clang}  )
-        # ( cd $src/tools/lldb && git checkout -q ${version_lldb}  )
         ( cd ${src_libcxx} && git checkout -q ${version_libcxx} )
         ( cd ${src_compilerrt} && git checkout -q ${version_compilerrt} )
 
@@ -299,6 +304,11 @@ if [ "${perform_clone}" == "1" ]; then
 
         ( cd ${src_libcxxrt} && git pull --rebase )
         ( cd ${src_libcxxrt} && git checkout -q ${version_libcxxrt} )
+
+        if [ "${perform_lldb_build}" == "1" ]; then
+            ( cd ${src}/tools/lldb && git pull --rebase )
+            ( cd $src/tools/lldb && git checkout -q ${version_lldb}  )
+        fi
     fi
 
     # Apply any patches we might need.

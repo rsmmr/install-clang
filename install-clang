@@ -267,7 +267,6 @@ if [ "${perform_clone}" == "1" ]; then
         git clone http://llvm.org/git/llvm.git `basename $src`
 
         ( cd $src/tools && git clone http://llvm.org/git/clang.git )
-        ( cd $src/tools && git clone http://llvm.org/git/lldb.git )
         ( cd $src/projects && git clone http://llvm.org/git/libcxx )
         ( cd $src/projects && git clone http://llvm.org/git/compiler-rt )
 

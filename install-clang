@@ -375,6 +375,8 @@ if [ "${use_libcxxabi}" == "1" ]; then
         libcxxabi_static=libc++abi.a
         test -d $libcxx_lib || mkdir -p $libcxx_lib
         cp -v $src_libcxxabi/lib/$libcxxabi_static $libcxx_lib
+        CMAKE_stage1="-DLIBCXX_LIBCXXABI_WHOLE_ARCHIVE=on"
+        CMAKE_stage2=$CMAKE_stage1
     fi
 
     addl_cmake="${addl_cmake} -DLIBCXX_CXX_ABI=libcxxabi -DLIBCXX_LIBCXXABI_INCLUDE_PATHS=${src_libcxxabi}/include"
@@ -393,7 +395,7 @@ BUILD_TYPE_stage1=Release
 CC_stage1="$cc"
 CXX_stage1="$cxx"
 CXXFLAGS_stage1=""
-CMAKE_stage1="-DLLVM_ENABLE_ASSERTIONS=off"
+CMAKE_stage1="$CMAKE_stage1 -DLLVM_ENABLE_ASSERTIONS=off"
 
 # Stage 2 options.
 
@@ -401,7 +403,7 @@ BUILD_TYPE_stage2=Release
 CC_stage2=$prefix/bin/clang
 CXX_stage2=$prefix/bin/clang++
 CXXFLAGS_stage2="-stdlib=libc++"
-CMAKE_stage2="-DLLVM_ENABLE_ASSERTIONS=off"
+CMAKE_stage1="$CMAKE_stage1 -DLLVM_ENABLE_ASSERTIONS=off"
 
 # Stage 3 options.
 

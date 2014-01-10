@@ -369,8 +369,8 @@ if [ "${use_libcxxabi}" == "1" ]; then
 
     if [ "$OS" == "Darwin" ]; then
         dylib=`install_shared_lib ${src_libcxxabi}/lib/libc++abi`
-        addl_ldflags="${addl_ldflags} -reexport_library $dylib"
-        addl_ldflags="${addl_ldflags} -sub_library libc++abi"
+        addl_ldflags="${addl_ldflags} -Wl,-reexport_library,$dylib"
+        addl_ldflags="${addl_ldflags} -Wl,-sub_library,libc++abi"
     else
         libcxxabi_static=libc++abi.a
         test -d $libcxx_lib || mkdir -p $libcxx_lib

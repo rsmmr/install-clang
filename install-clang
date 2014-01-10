@@ -314,7 +314,13 @@ if [ "${perform_clone}" == "1" ]; then
     for i in $patches/*; do
         echo Applying $i ...
         b=`basename $i`
-        ( cd $src; echo === $i; basename "$i" | grep -- '-' && cd `echo $b | awk -v src=$src -F - '{printf("%s/%s/%s", src, $1, $2);}'`; pwd; cat $i | git am -3 )
+        ( cd $src
+          echo === $i
+          basename "$i" | grep -- '-' \
+            && cd `echo $b | awk -v src=$src -F '--' \
+               '{printf("%s/%s/%s", src, $1, $2);}'`;
+          pwd
+          cat $i | git am -3)
     done
 
     echo === Done applying patches

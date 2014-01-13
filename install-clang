@@ -410,7 +410,7 @@ BUILD_TYPE_stage1=Release
 CC_stage1="$cc"
 CXX_stage1="$cxx"
 CXXFLAGS_stage1=""
-CMAKE_stage1="$CMAKE_stage1 -DLLVM_ENABLE_ASSERTIONS=off"
+CMAKE_stage1="${CMAKE_stage1} -DLLVM_ENABLE_ASSERTIONS=off"
 
 # Stage 2 options.
 
@@ -418,7 +418,7 @@ BUILD_TYPE_stage2=Release
 CC_stage2=$prefix/bin/clang
 CXX_stage2=$prefix/bin/clang++
 CXXFLAGS_stage2="-stdlib=libc++"
-CMAKE_stage1="$CMAKE_stage1 -DLLVM_ENABLE_ASSERTIONS=off"
+CMAKE_stage2="${CMAKE_stage2} -DLLVM_ENABLE_ASSERTIONS=off"
 
 # Stage 3 options.
 
@@ -431,7 +431,7 @@ fi
 CC_stage3=$prefix/bin/clang
 CXX_stage3=$prefix/bin/clang++
 CXXFLAGS_stage3="-stdlib=libc++"
-CMAKE_stage3="-DLLVM_ENABLE_ASSERTIONS=on -DLLVM_EXTERNAL_CLANG_BUILD=off -DLLVM_EXTERNAL_LIBCXX_BUILD=off -DLLVM_EXTERNAL_COMPILER_RT_BUILD=off"
+CMAKE_stage3="${CMAKE_stage3} -DLLVM_ENABLE_ASSERTIONS=on -DLLVM_EXTERNAL_CLANG_BUILD=off -DLLVM_EXTERNAL_LIBCXX_BUILD=off -DLLVM_EXTERNAL_COMPILER_RT_BUILD=off"
 
 #### Compile the stages.
 

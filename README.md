@@ -17,26 +17,26 @@ Usage
 To see the available options, use `-h`:
 
     > ./install-clang -h
-    usage: install-clang <options> <prefix>
+    Usage: install-clang [<options>] <install-prefix>
 
-    available options:
-        -a <abi>   ABI to use [libcxxrt or libcxxabi]
-        -i         install into <prefix>
-        -j <n>     build with <n> threads in parallel
-        -l         attempt to build LLDB
-        -m         use git/master instead of chosen commits
+    Available options:
+        -a <abi>   ABI to use [libcxxrt or libcxxabi; default OS-specific]
+        -j <n>     build with <n> threads in parallel [default: 1]
+        -l         attempt to build LLDB (experimental)
+        -m         use git/master instead of preconfigured versions
         -s <stage> begin build from <stage> [1, 2, 3]
-        -u         update an existing build in <prefix>
+        -c         skip cloning repositories, assume they are in place
+        -u         update an existing build in <prefix> instead of installing new
         -h|-?      display this help
 
-    environment variables:
-        CC         path to the C compiler
-        CXX        path to the C++ compiler
+    Environment variables:
+        CC         path to the C compiler for bootstrapping
+        CXX        path to the C++ compiler for bootstrapping
 
 For example, to build Clang with libc++abi on a machine with multiple
 cores and install it in `/opt/llvm`, you can use:
 
-    > ./install-clang -i -a libcxxabi -j 16 /opt/llvm
+    > ./install-clang -a libcxxabi -j 16 /opt/llvm
 
 Once finished, just prefix your PATH with `<prefix>/bin` and you're
 ready to use the new binaries:
@@ -44,18 +44,18 @@ ready to use the new binaries:
     > clang++ --std=c++11 --stdlib=libc++ test.cc -o a.out && ./a.out
     Hello, Clang!
 
-By default, install-clang currently installs the 3.4 (git) branches of
-the relevant llvm.org projects. Adding `-m` on the command line
-instructs the script to use the current master version instead. The
-script then downloads all the sources from the corresponding git
-repositories and compiles the pieces as needed. Other OSs than
-Darwin and Linux are not currently supported.
+By default, install-clang currently installs the 3.4 release branches
+of the relevant llvm.org projects. Adding `-m` on the command line
+instructs the script to use the current git master versions instead.
+The script downloads all the sources from the corresponding git
+repositories and compiles the pieces as needed. Other OSs than Darwin
+and Linux are not currently supported.
 
 The script also has an update option `-u` that allows for catching up
 with upstream repository changes without doing the complete
-2-stage compile/install cycle again. Unless coupled with `-m`, this flag
-has no immediate effect since the git versions to use are hardcoded to
-the LLVM/clang release versions.
+compile/install-from-scratch cycle again. Note, however, that unless
+coupled with `-m`, this flag has no immediate effect since the git
+versions to use are hardcoded to the LLVM/clang release versions.
 
 Details
 -------
@@ -78,11 +78,9 @@ independent setup working. Specifically:
   [libcxxrt][6] on Linux, but also allows for manually specifiying an
   ABI via the `-a` switch.
 
-- It patches clang to search libc++ headers relative to the
-  installation prefix.
-
-- It patches the build script for libc++abi to accept a prefix
-  specification.
+- It patches some of the LLVM projects to incorporate the installation
+  prefix into configuration and search paths, and to fix/tweak a few
+  other things as well.
 
 [1]: http://clang.llvm.org
 [2]: http://www.llvm.org

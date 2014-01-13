@@ -59,27 +59,36 @@ perform_stage3=1           # If 1, build a 3rd stage LLVM with assertions enable
 perform_lldb_build=0       # If 1, attempt to build LLDB.
 stage3_llvm_with_debug=0   # If 1, build the 3rd stage LLVM in debug mode.
 parallelism=1              # The value X to pass to make -j X to build in parallel.
+mode=install               # Install from scratch.
 
 usage()
 {
-    printf "usage: %s <options> <prefix>\n" $(basename $0)
-    echo ''
-    echo 'available options:'
-    echo '    -a <abi>   ABI to use [libcxxrt or libcxxabi]'
-    echo '    -i         install into <prefix>'
-    echo '    -j <n>     build with <n> threads in parallel'
-    echo '    -l         attempt to build LLDB'
-    echo '    -m         use git/master instead of chosen commits'
-    echo '    -s <stage> begin build from <stage> [1, 2, 3]'
-    echo '    -u         update an existing build in <prefix>'
-    echo '    -h|-?      display this help'
-    echo ''
-    echo 'environment variables:'
-    echo '    CC         path to the C compiler'
-    echo '    CXX        path to the C++ compiler'
+    if [ "${use_libcxxabi}" == "1" ]; then
+        abi="libcxxabi"
+    fi
+
+    if [ "${use_libcxxrt}" == "1" ]; then
+        abi="libcxxrt"
+    fi
+
+    printf "Usage: %s [<options>] <install-prefix>\n" $(basename $0)
+    echo ""
+    echo "Available options:"
+    echo "    -a <abi>   ABI to use [libcxxrt or libcxxabi; default ${abi}]"
+    echo "    -j <n>     build with <n> threads in parallel [default: ${parallelism}]"
+    echo "    -l         attempt to build LLDB (experimental)"
+    echo "    -m         use git/master instead of preconfigured versions"
+    echo "    -s <stage> begin build from <stage> [1, 2, 3]"
+    echo "    -c         skip cloning repositories, assume they are in place"
+    echo "    -u         update an existing build in <prefix> instead of installing new"
+    echo "    -h|-?      display this help"
+    echo ""
+    echo "Environment variables:"
+    echo "    CC         path to the C compiler for bootstrapping"
+    echo "    CXX        path to the C++ compiler for bootstrapping"
 }
 
-while getopts "a:ij:lms:uh?" opt ; do
+while getopts "a:j:lms:uch?" opt ; do
     case "$opt" in
         a)
             if [ "$OPTARG" == "libcxxabi" ] ; then
@@ -93,12 +102,12 @@ while getopts "a:ij:lms:uh?" opt ; do
                 exit 1
             fi
             ;;
+        c)
+            perform_clone=0
+            ;;
         h|\?)
             usage
             exit 0
-            ;;
-        i)
-            mode=install
             ;;
         j)
             parallelism=$OPTARG

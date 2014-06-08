@@ -224,7 +224,6 @@ function install_shared_lib
     echo $dest
 }
 
-
 #### Clone reposistories.
 
 d=`dirname $0`
@@ -331,11 +330,10 @@ if [ "${perform_abi}" == "1" ]; then
     fi
 
     if [ "${use_libcxxrt}" == "1" ]; then
-        echo \
-'/--\--/--\--/--\--/--\--/--\--/--\--/--\--/--\--/--\--/--\--/--\\
-   Building libcxxrt ...\
-/--\--/--\--/--\--/--\--/--\--/--\--/--\--/--\--/--\--/--\--/--\'
-
+        echo ===
+        echo === Building libcxxrt ...
+        echo ===
+s
         ( cd ${src_libcxxrt} && rm -rf build && mkdir build && cd build && CFLAGS="-fPIC" CXXFLAGS="-fPIC" cmake .. && make -j $parallelism)
 
         if [ "$?" != "0" ] ; then
@@ -440,5 +438,5 @@ done
 echo "===="
 echo "==== Complete log in $log"
 echo "==== Finished at $(date)"
-echo "==== This script was called by: $(whoami), with arguments: $@"
+echo "==== This script was called by: $(whoami), with arguments: $*"
 echo "===="

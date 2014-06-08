@@ -1,75 +1,62 @@
 #! /usr/bin/env bash
 #
-#
 # TODO:
 #    - Check if we still need all the patches.
 #    - Bring back the update mode.
 #    - Try adding llvdb once again.
 
 OS=`uname`
+
 if [ "$OS" == "Linux" ]; then
+
     use_libcxxabi=0
-    use_libcxxrt=1
-    triple=""
-    soext="so"
-    somask="so.%s"
-    addl_ldflags="-ldl"
+     use_libcxxrt=1
+           triple=""
+            soext="so"
+           somask="so.%s"
+     addl_ldflags="-ldl"
 
 elif [ "$OS" == "Darwin" ]; then
+
     use_libcxxabi=1
-    use_libcxxrt=0
-    triple="-apple-"
-    soext="dylib"
-    somask="%d.dylib"
-    addl_ldflags=""
-
+     use_libcxxrt=0
+           triple="-apple-"
+            soext="dylib"
+           somask="%d.dylib"
+     addl_ldflags=""
 else
-    echo "OS $OS not supported by this script."
-    exit 1
+    echo "OS $OS not supported by this script."; exit 1
 fi
 
-if [ -n "$CC" ]; then
-    cc=$CC
-elif which clang > /dev/null 2>&1; then
-    cc=clang
-elif which gcc > /dev/null 2>&1; then
-    cc=gcc
-else
-    echo could not find clang or gcc in '$PATH'
-    exit 1
+if [ -n "$CC" ];                   then cc=$CC
+elif which clang > /dev/null 2>&1; then cc=clang
+elif which   gcc > /dev/null 2>&1; then cc=gcc
+
+else echo could not find clang or gcc in '$PATH'; exit 1
 fi
 
-if [ -n "$CXX" ]; then
-    cxx=$CXX
-elif which clang++ > /dev/null 2>&1; then
-    cxx=clang++
-elif which g++ > /dev/null 2>&1; then
-    cxx=g++
-else
-    echo could not find clang++ or g++ in '$PATH'
-    exit 1
+if [ -n "$CXX" ];                    then cxx=$CXX
+elif which clang++ > /dev/null 2>&1; then cxx=clang++
+elif which     g++ > /dev/null 2>&1; then cxx=g++
+
+else echo could not find clang++ or g++ in '$PATH'; exit 1
 fi
 
-use_master=0
-perform_clone=1            # If 0, skip the cloning (for testing only).
-perform_abi=1              # If 0, skip libc++abi/libcxxrt  (for testing only).
-perform_stage1=1           # If 0, skip the 1st bootstrap stage (for testing only).
-perform_stage2=1           # If 0, skip the 2nd stage compiling LLVM/clang against libc++ (for testing only).
-perform_stage3=1           # If 1, build a 3rd stage LLVM with assertions enabled.
-perform_lldb_build=0       # If 1, attempt to build LLDB.
-stage3_llvm_with_debug=0   # If 1, build the 3rd stage LLVM in debug mode.
-parallelism=1              # The value X to pass to make -j X to build in parallel.
-mode=install               # Install from scratch.
+            use_master=0
+         perform_clone=1 # If 0, skip the cloning (for testing only).
+           perform_abi=1 # If 0, skip libc++abi/libcxxrt  (for testing only).
+        perform_stage1=1 # If 0, skip the 1st bootstrap stage (for testing only).
+        perform_stage2=1 # If 0, skip the 2nd stage compiling LLVM/clang against libc++ (for testing only).
+        perform_stage3=1 # If 1, build a 3rd stage LLVM with assertions enabled.
+    perform_lldb_build=0 # If 1, attempt to build LLDB.
+stage3_llvm_with_debug=0 # If 1, build the 3rd stage LLVM in debug mode.
+           parallelism=1 # The value X to pass to make -j X to build in parallel.
+            mode=install # Install from scratch.
 
 usage()
 {
-    if [ "${use_libcxxabi}" == "1" ]; then
-        abi="libcxxabi"
-    fi
-
-    if [ "${use_libcxxrt}" == "1" ]; then
-        abi="libcxxrt"
-    fi
+    if [ "${use_libcxxabi}" == "1" ]; then abi="libcxxabi"; fi
+    if [ "${use_libcxxrt}"  == "1" ]; then abi="libcxxrt";  fi
 
     printf "Usage: %s [<options>] <install-prefix>\n" $(basename $0)
     echo ""
@@ -91,15 +78,10 @@ usage()
 while getopts "a:j:lms:uch?" opt ; do
     case "$opt" in
         a)
-            if [ "$OPTARG" == "libcxxabi" ] ; then
-                use_libcxxabi=1
-                use_libcxxrt=0
-            elif [ "$OPTARG" == "libcxxrt" ] ; then
-                use_libcxxabi=0
-                use_libcxxrt=1
+            if [ "$OPTARG"   == "libcxxabi" ]; then use_libcxxabi=1 && use_libcxxrt=0
+            elif [ "$OPTARG" ==  "libcxxrt" ]; then use_libcxxabi=0 && use_libcxxrt=1
             else
-                echo '-a requires either "libcxxabi" or "libcxxrt"'
-                exit 1
+                echo '-a requires either "libcxxabi" or "libcxxrt"'; exit 1
             fi
             ;;
         c)
@@ -119,21 +101,19 @@ while getopts "a:j:lms:uch?" opt ; do
             use_master=1
             ;;
         s)
-            if [ "$OPTARG" == "1" ] ; then
-                perform_stage1=1
-                perform_stage2=1
-                perform_stage3=1
-            elif [ "$OPTARG" == "2" ] ; then
-                perform_stage1=0
-                perform_stage2=1
-                perform_stage3=1
-            elif [ "$OPTARG" == "3" ] ; then
-                perform_stage1=0
-                perform_stage2=0
-                perform_stage3=1
-            else
-                echo 'stage parameter must be in [1,3].'
-                exit 1
+            if [ "$OPTARG"   == "1" ]; then perform_stage1=1
+                                            perform_stage2=1
+                                            perform_stage3=1
+
+            elif [ "$OPTARG" == "2" ]; then perform_stage1=0
+                                            perform_stage2=1
+                                            perform_stage3=1
+
+            elif [ "$OPTARG" == "3" ]; then perform_stage1=0
+                                            perform_stage2=0
+                                            perform_stage3=1
+
+            else echo 'stage parameter must be in [1,3].'; exit 1
             fi
             ;;
         u)
@@ -146,42 +126,32 @@ shift $(expr $OPTIND - 1)
 prefix=`echo $1 | sed 's#/$##'`
 shift
 
-if [ "${use_master}" != "1" ]; then
-    # git version to checkout.
-    version_llvm=release_34
-    version_clang=release_34
-    version_libcxx=release_34
-    version_compilerrt=release_34
-    version_libcxxabi=753a30dd      # Latest commit at time of writing.
-    version_libcxxrt=800610         # Latest commit at time of writing.
-    version_lldb=release_34
+if [ "${use_master}" != "1" ]; then # git version to checkout.
 
+       version_llvm=release_34
+      version_clang=release_34
+     version_libcxx=release_34
+ version_compilerrt=release_34
+  version_libcxxabi=753a30dd        # Latest commit at time of writing.
+   version_libcxxrt=800610          # Latest commit at time of writing.
+       version_lldb=release_34
 else
-    # git version to checkout.
-    version_llvm=master
-    version_clang=master
-    version_libcxx=master
-    version_compilerrt=master
-    version_libcxxabi=master
-    version_libcxxrt=master
-    version_lldb=master
+       version_llvm=master          # git version to checkout.
+      version_clang=master
+     version_libcxx=master
+ version_compilerrt=master
+  version_libcxxabi=master
+   version_libcxxrt=master
+       version_lldb=master
 fi
 
-if [ "$mode" == "" -o "$prefix" == "" ]; then
-    usage
-    exit 1
-fi
+if [ "$mode" == "" -o "$prefix" == "" ]; then usage; exit 1; fi
 
-if [ ! -d $prefix ]; then
-    if [ "$mode" == "install" ]; then
-        if ! mkdir -p $prefix; then
-            echo failed to create directory $prefix
-            exit 1
-        fi
-    else
-        echo $prefix does not exist
-        exit 1
-    fi
+if [ ! -d $prefix ] && [ "$mode" == "install" ]; then
+  if ! mkdir -p $prefix; then echo failed to create directory $prefix
+  else                        echo $prefix does not exist
+  fi
+  exit 1
 fi
 
 #if [ "$mode" == "update" ]; then
@@ -210,16 +180,16 @@ unset DYLD_LIBRARY_PATH
 
 # Built libraries with RTTI.
 export REQUIRES_RTTI=1
-export PATH=$prefix/bin:$PATH
+export          PATH=$prefix/bin:$PATH
 
-src="$prefix/src/llvm"
-src_libcxxabi=${src}/projects/libcxxabi
-src_libcxxrt=${src}/projects/libcxxrt
-src_libcxx=${src}/projects/libcxx
-src_compilerrt=${src}/projects/compiler-rt
-libcxx_include=$prefix/include/c++/v1
-libcxx_lib=$prefix/lib
-default_includes=${libcxx_include}:/usr/include
+                 src="$prefix/src/llvm"
+       src_libcxxabi=${src}/projects/libcxxabi
+        src_libcxxrt=${src}/projects/libcxxrt
+          src_libcxx=${src}/projects/libcxx
+      src_compilerrt=${src}/projects/compiler-rt
+      libcxx_include=$prefix/include/c++/v1
+          libcxx_lib=$prefix/lib
+    default_includes=${libcxx_include}:/usr/include
 
 mkdir -p $libcxx_include
 
@@ -230,14 +200,12 @@ function st
 
 function install_shared_lib
 {
-    src=$1
-    base=`basename $src`
-    lib=`ls $src.*$soext*`
+      src=$1
+     base=`basename $src`
+      lib=`ls $src.*$soext*`
     major=`echo $lib | sed 's#.*\.\([0-9]\)\..*#\\1#g'`
 
-    if [ "$major" == "$lib" ]; then
-        major=1
-    fi
+    if [ "$major" == "$lib" ]; then major=1; fi
 
     dest=$libcxx_lib/$base.`printf $somask $major`
     link=$libcxx_lib/$base.$soext
@@ -255,7 +223,6 @@ function install_shared_lib
 
     echo $dest
 }
-
 
 #### Clone reposistories.
 
@@ -275,52 +242,51 @@ if [ "${perform_clone}" == "1" ]; then
 
         git clone http://llvm.org/git/llvm.git `basename $src`
 
-        ( cd $src/tools && git clone http://llvm.org/git/clang.git )
-        ( cd $src/projects && git clone http://llvm.org/git/libcxx )
-        ( cd $src/projects && git clone http://llvm.org/git/compiler-rt )
+        ( cd $src/tools            && git clone http://llvm.org/git/clang.git )
+        ( cd $src/projects         && git clone http://llvm.org/git/libcxx )
+        ( cd $src/projects         && git clone http://llvm.org/git/compiler-rt )
 
-        ( cd $src && git checkout -q ${version_llvm} )
-        ( cd $src/tools/clang && git checkout -q ${version_clang}  )
-        ( cd ${src_libcxx} && git checkout -q ${version_libcxx} )
-        ( cd ${src_compilerrt} && git checkout -q ${version_compilerrt} )
+        ( cd $src                  && git checkout -q ${version_llvm} )
+        ( cd $src/tools/clang      && git checkout -q ${version_clang}  )
+        ( cd ${src_libcxx}         && git checkout -q ${version_libcxx} )
+        ( cd ${src_compilerrt}     && git checkout -q ${version_compilerrt} )
 
-        ( cd $src/projects && git clone http://llvm.org/git/libcxxabi )
-        ( cd ${src_libcxxabi} && git checkout -q ${version_libcxxabi} )
+        ( cd $src/projects         && git clone http://llvm.org/git/libcxxabi )
+        ( cd ${src_libcxxabi}      && git checkout -q ${version_libcxxabi} )
 
-        ( cd $src/projects && git clone https://github.com/pathscale/libcxxrt )
-        ( cd ${src_libcxxrt} && git checkout -q ${version_libcxxrt} )
+        ( cd $src/projects         && git clone https://github.com/pathscale/libcxxrt )
+        ( cd ${src_libcxxrt}       && git checkout -q ${version_libcxxrt} )
 
         if [ "${perform_lldb_build}" == "1" ]; then
-            ( cd $src/tools/lldb && git checkout -q ${version_lldb}  )
+            ( cd $src/tools/lldb   && git checkout -q ${version_lldb}  )
         fi
     else
         echo Changing directory to `dirname $src` ...
         cd `dirname $src`
 
-        ( cd ${src} && git pull --rebase )
-        ( cd ${src}/tools/clang && git pull --rebase )
-        ( cd ${src_libcxx} && git pull --rebase )
-        ( cd ${src_compilerrt} && git pull --rebase )
+        ( cd ${src}                && git pull --rebase )
+        ( cd ${src}/tools/clang    && git pull --rebase )
+        ( cd ${src_libcxx}         && git pull --rebase )
+        ( cd ${src_compilerrt}     && git pull --rebase )
 
-        ( cd $src && git checkout -q ${version_llvm} )
-        ( cd $src/tools/clang && git checkout -q ${version_clang}  )
-        ( cd ${src_libcxx} && git checkout -q ${version_libcxx} )
-        ( cd ${src_compilerrt} && git checkout -q ${version_compilerrt} )
+        ( cd $src                  && git checkout -q ${version_llvm} )
+        ( cd $src/tools/clang      && git checkout -q ${version_clang}  )
+        ( cd ${src_libcxx}         && git checkout -q ${version_libcxx} )
+        ( cd ${src_compilerrt}     && git checkout -q ${version_compilerrt} )
 
-        ( cd ${src_libcxxabi} && git pull --rebase )
-        ( cd ${src_libcxxabi} && git checkout -q ${version_libcxxabi} )
+        ( cd ${src_libcxxabi}      && git pull --rebase )
+        ( cd ${src_libcxxabi}      && git checkout -q ${version_libcxxabi} )
 
-        ( cd ${src_libcxxrt} && git pull --rebase )
-        ( cd ${src_libcxxrt} && git checkout -q ${version_libcxxrt} )
+        ( cd ${src_libcxxrt}       && git pull --rebase )
+        ( cd ${src_libcxxrt}       && git checkout -q ${version_libcxxrt} )
 
         if [ "${perform_lldb_build}" == "1" ]; then
             ( cd ${src}/tools/lldb && git pull --rebase )
-            ( cd $src/tools/lldb && git checkout -q ${version_lldb}  )
+            ( cd $src/tools/lldb   && git checkout -q ${version_lldb}  )
         fi
     fi
 
-    # Apply any patches we might need.
-    for i in $patches/*; do
+    for i in $patches/*; do     # Apply any patches we might need.
         echo Applying $i ...
         b=`basename $i`
         ( cd $src
@@ -367,7 +333,7 @@ if [ "${perform_abi}" == "1" ]; then
         echo ===
         echo === Building libcxxrt ...
         echo ===
-
+s
         ( cd ${src_libcxxrt} && rm -rf build && mkdir build && cd build && CFLAGS="-fPIC" CXXFLAGS="-fPIC" cmake .. && make -j $parallelism)
 
         if [ "$?" != "0" ] ; then
@@ -390,16 +356,16 @@ if [ "${use_libcxxabi}" == "1" ]; then
         libcxxabi_static=libc++abi.a
         test -d $libcxx_lib || mkdir -p $libcxx_lib
         cp -v $src_libcxxabi/lib/$libcxxabi_static $libcxx_lib
-        CMAKE_stage1="-DLIBCXX_LIBCXXABI_WHOLE_ARCHIVE=on"
+        CMAKE_stage1="-DLIBCXX_LIBCXXABI_WHOLE_ARCHIVE=on -DCLANG_BUILD_EXAMPLES=on"
         CMAKE_stage2=$CMAKE_stage1
     fi
 
-    addl_cmake="${addl_cmake} -DLIBCXX_CXX_ABI=libcxxabi -DLIBCXX_LIBCXXABI_INCLUDE_PATHS=${src_libcxxabi}/include"
+    addl_cmake="${addl_cmake} -DCLANG_BUILD_EXAMPLES=on -DLIBCXX_CXX_ABI=libcxxabi -DLIBCXX_LIBCXXABI_INCLUDE_PATHS=${src_libcxxabi}/include"
 fi
 
 if [ "${use_libcxxrt}" == "1" ]; then
     addl_ldflags="${addl_ldflags} -L${src_libcxxrt}/build/lib"
-    addl_cmake="${addl_cmake} -DLIBCXX_CXX_ABI=libcxxrt -DLIBCXX_LIBCXXRT_INCLUDE_PATHS=${src_libcxxrt}/src"
+    addl_cmake="${addl_cmake} -DCLANG_BUILD_EXAMPLES=on -DLIBCXX_CXX_ABI=libcxxrt -DLIBCXX_LIBCXXRT_INCLUDE_PATHS=${src_libcxxrt}/src"
 fi
 
 #### Configure the stages.
@@ -407,31 +373,29 @@ fi
 # Stage 1 options.
 
 BUILD_TYPE_stage1=Release
-CC_stage1="$cc"
-CXX_stage1="$cxx"
-CXXFLAGS_stage1=""
-CMAKE_stage1="${CMAKE_stage1} -DLLVM_ENABLE_ASSERTIONS=off"
+        CC_stage1="$cc"
+       CXX_stage1="$cxx"
+  CXXFLAGS_stage1=""
+     CMAKE_stage1="${CMAKE_stage1} -DLLVM_ENABLE_ASSERTIONS=off -DCLANG_BUILD_EXAMPLES=on"
 
 # Stage 2 options.
 
 BUILD_TYPE_stage2=Release
-CC_stage2=$prefix/bin/clang
-CXX_stage2=$prefix/bin/clang++
-CXXFLAGS_stage2="-stdlib=libc++"
-CMAKE_stage2="${CMAKE_stage2} -DLLVM_ENABLE_ASSERTIONS=off"
+        CC_stage2=$prefix/bin/clang
+       CXX_stage2=$prefix/bin/clang++
+  CXXFLAGS_stage2="-stdlib=libc++"
+     CMAKE_stage2="${CMAKE_stage2} -DLLVM_ENABLE_ASSERTIONS=off -DCLANG_BUILD_EXAMPLES=on"
 
 # Stage 3 options.
 
-if [ "${stage3_llvm_with_debug}" != "1" ]; then
-    BUILD_TYPE_stage3=RelWithDebInfo
-else
-    BUILD_TYPE_stage3=Debug
+if [ "${stage3_llvm_with_debug}" != "1" ]; then BUILD_TYPE_stage3=RelWithDebInfo
+else                                            BUILD_TYPE_stage3=Debug
 fi
 
-CC_stage3=$prefix/bin/clang
-CXX_stage3=$prefix/bin/clang++
+      CC_stage3=$prefix/bin/clang
+     CXX_stage3=$prefix/bin/clang++
 CXXFLAGS_stage3="-stdlib=libc++"
-CMAKE_stage3="${CMAKE_stage3} -DLLVM_ENABLE_ASSERTIONS=on -DLLVM_EXTERNAL_CLANG_BUILD=off -DLLVM_EXTERNAL_LIBCXX_BUILD=off -DLLVM_EXTERNAL_COMPILER_RT_BUILD=off"
+   CMAKE_stage3="${CMAKE_stage3} -DCLANG_BUILD_EXAMPLES=on -DLLVM_ENABLE_ASSERTIONS=on -DLLVM_EXTERNAL_CLANG_BUILD=off -DLLVM_EXTERNAL_LIBCXX_BUILD=off -DLLVM_EXTERNAL_COMPILER_RT_BUILD=off"
 
 #### Compile the stages.
 
@@ -454,6 +418,7 @@ for stage in 1 2 3; do
        cmake -DCMAKE_BUILD_TYPE=`st BUILD_TYPE` \
              -DLLVM_REQUIRES_RTTI=1 \
              -DCMAKE_INSTALL_PREFIX=${prefix} \
+             -DCLANG_BUILD_EXAMPLES=on\
              -DC_INCLUDE_DIRS=${default_includes} \
              ${addl_cmake} \
              `st CMAKE` \
@@ -472,4 +437,6 @@ done
 
 echo "===="
 echo "==== Complete log in $log"
+echo "==== Finished at $(date)"
+echo "==== This script was called by: $(whoami), with arguments: $*"
 echo "===="

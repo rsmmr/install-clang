@@ -1,0 +1,83 @@
+From 40e93ec570d3da139d536f4966041e466d09c9fb Mon Sep 17 00:00:00 2001
+From: Robin Sommer <robin@icir.org>
+Date: Mon, 16 Jun 2014 21:12:46 -0700
+Subject: [PATCH] Patchpoint and Stackmap Intrinsics for Linux/ELF.
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Adapted from patch by Jörg_Blank.
+http://marc.info/?l=llvm-commits&m=138857130221907
+---
+ lib/CodeGen/StackMaps.cpp        | 6 +++++-
+ lib/MC/MCObjectFileInfo.cpp      | 4 ++++
+ lib/Target/X86/X86AsmPrinter.cpp | 6 ++++--
+ 3 files changed, 13 insertions(+), 3 deletions(-)
+
+diff --git a/lib/CodeGen/StackMaps.cpp b/lib/CodeGen/StackMaps.cpp
+index 1473fc1..09b2479 100644
+--- a/lib/CodeGen/StackMaps.cpp
++++ b/lib/CodeGen/StackMaps.cpp
+@@ -493,7 +493,11 @@ void StackMaps::serializeToStackMapSection() {
+   OS.SwitchSection(StackMapSection);
+ 
+   // Emit a dummy symbol to force section inclusion.
+-  OS.EmitLabel(OutContext.GetOrCreateSymbol(Twine("__LLVM_StackMaps")));
++  Triple T(AP.TM.getTargetTriple());
++  if (T.isOSDarwin() || T.getEnvironment() == Triple::MachO)
++    OS.EmitLabel(OutContext.GetOrCreateSymbol(Twine("__LLVM_StackMaps")));
++  else
++    OS.EmitLabel(OutContext.GetOrCreateSymbol(Twine(".llvm_stackmaps")));
+ 
+   // Serialize data.
+   DEBUG(dbgs() << "********** Stack Map Output **********\n");
+diff --git a/lib/MC/MCObjectFileInfo.cpp b/lib/MC/MCObjectFileInfo.cpp
+index d12f60c..39927af 100644
+--- a/lib/MC/MCObjectFileInfo.cpp
++++ b/lib/MC/MCObjectFileInfo.cpp
+@@ -565,6 +565,10 @@ void MCObjectFileInfo::InitELFMCObjectFileInfo(Triple T) {
+   DwarfAddrSection =
+     Ctx->getELFSection(".debug_addr", ELF::SHT_PROGBITS, 0,
+                        SectionKind::getMetadata());
++
++  StackMapSection =
++    Ctx->getELFSection(".llvm_stackmaps", ELF::SHT_PROGBITS, ELF::SHF_ALLOC,
++                       SectionKind::getMetadata());
+ }
+ 
+ 
+diff --git a/lib/Target/X86/X86AsmPrinter.cpp b/lib/Target/X86/X86AsmPrinter.cpp
+index 1dca568..fddf86e 100644
+--- a/lib/Target/X86/X86AsmPrinter.cpp
++++ b/lib/Target/X86/X86AsmPrinter.cpp
+@@ -606,6 +606,8 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
+         OutStreamer.EmitBytes(StringRef(HltInsts, 5));
+       }
+ 
++      SM.serializeToStackMapSection();
++
+       Stubs.clear();
+       OutStreamer.AddBlankLine();
+     }
+@@ -641,8 +643,6 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
+       OutStreamer.AddBlankLine();
+     }
+ 
+-    SM.serializeToStackMapSection();
+-
+     // Funny Darwin hack: This flag tells the linker that no global symbols
+     // contain code that falls through to other global symbols (e.g. the obvious
+     // implementation of multiple entry points).  If this doesn't occur, the
+@@ -712,7 +712,9 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
+       }
+       Stubs.clear();
+     }
++    SM.serializeToStackMapSection();
+   }
++
+ }
+ 
+ //===----------------------------------------------------------------------===//
+-- 
+1.9.3
+

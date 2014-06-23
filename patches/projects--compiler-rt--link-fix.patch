@@ -1,36 +1,32 @@
-From 42b7861b3233e993458ec5202ed229a0fdf64b09 Mon Sep 17 00:00:00 2001
-From: Matthias Vallentin <vallentin@icir.org>
-Date: Thu, 9 Jan 2014 16:58:10 -0800
+From 6515d9951bb68a7028e56e37ea6255a940c7ebf2 Mon Sep 17 00:00:00 2001
+From: Robin Sommer <robin@icir.org>
+Date: Sun, 15 Jun 2014 20:02:25 -0700
 Subject: [PATCH] Disable iossim build to fix linker errors.
 
-When attempting to build the address sanitizer for the iOS simulator, we run
-into an architecture mismatch between dependent shared libraries, such as
-libc++.dylib.
+When attempting to build the address sanitizer for the iOS simulator,
+we run into an architecture mismatch between dependent shared
+libraries, such as libc++.dylib.
 
 Disabling the iOS simulator build fixes the issue.
 ---
- CMakeLists.txt | 8 +++++---
- 1 file changed, 5 insertions(+), 3 deletions(-)
+ CMakeLists.txt | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
 
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index a442408..a3e1915 100644
+index 3b52403..3571aa1 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -188,9 +188,11 @@ if(APPLE)
-     OUTPUT_STRIP_TRAILING_WHITESPACE
-   )
+@@ -341,7 +341,9 @@ if(APPLE)
+          MACOSX_VERSION_MIN_FLAG "${CMAKE_CXX_FLAGS}")
    set(SANITIZER_COMMON_SUPPORTED_DARWIN_OS osx)
--  if (IOSSIM_SDK_DIR)
+   if (IOSSIM_SDK_DIR AND NOT MACOSX_VERSION_MIN_FLAG)
 -    list(APPEND SANITIZER_COMMON_SUPPORTED_DARWIN_OS iossim)
--  endif()
-+  # Disable iOS Simulator build because it clashes with the architecture of
-+  # dependent libraries, such libc++abi and libc++.
-+  #if (IOSSIM_SDK_DIR)
-+  #  list(APPEND SANITIZER_COMMON_SUPPORTED_DARWIN_OS iossim)
-+  #endif()
++    # Disable iOS Simulator build because it clashes with the architecture of
++    # dependent libraries, such libc++abi and libc++.
++    # list(APPEND SANITIZER_COMMON_SUPPORTED_DARWIN_OS iossim)
+   endif()
  
    if(COMPILER_RT_USES_LIBCXX)
-     set(SANITIZER_MIN_OSX_VERSION 10.7)
 -- 
-1.8.4.3
+1.9.3
 

@@ -8,8 +8,8 @@
 
 OS=`uname`
 if [ "$OS" == "Linux" ]; then
-    use_libcxxabi=0
-    use_libcxxrt=1
+    use_libcxxabi=1
+    use_libcxxrt=0
     triple=""
     soext="so"
     somask="so.%s"
@@ -217,6 +217,7 @@ src_libcxxabi=${src}/projects/libcxxabi
 src_libcxxrt=${src}/projects/libcxxrt
 src_libcxx=${src}/projects/libcxx
 src_compilerrt=${src}/projects/compiler-rt
+src_lldb=${src}/lldb
 libcxx_include=$prefix/include/c++/v1
 libcxx_lib=$prefix/lib
 default_includes=${libcxx_include}:/usr/include
@@ -270,7 +271,7 @@ if [ "${perform_clone}" == "1" ]; then
         test -d $src && echo "$src already exists, aborting" && exit 1
         mkdir -p $src
 
-        echo Changing directory to `dirname $src` ...
+        echo Changing directory to `dirname $src` for installing  ...
         cd `dirname $src`
 
         git clone http://llvm.org/git/llvm.git `basename $src`
@@ -291,10 +292,11 @@ if [ "${perform_clone}" == "1" ]; then
         ( cd ${src_libcxxrt} && git checkout -q ${version_libcxxrt} )
 
         if [ "${perform_lldb_build}" == "1" ]; then
-            ( cd $src/tools/lldb && git checkout -q ${version_lldb}  )
+            ( cd `dirname ${src_lldb}` && git clone http://llvm.org/git/lldb `basename ${src_lldb}`)
+            ( cd ${src_lldb} && git checkout -q ${version_lldb}  )
         fi
     else
-        echo Changing directory to `dirname $src` ...
+        echo Changing directory to `dirname $src` for updating ...
         cd `dirname $src`
 
         ( cd ${src} && git pull --rebase )
@@ -314,8 +316,8 @@ if [ "${perform_clone}" == "1" ]; then
         ( cd ${src_libcxxrt} && git checkout -q ${version_libcxxrt} )
 
         if [ "${perform_lldb_build}" == "1" ]; then
-            ( cd ${src}/tools/lldb && git pull --rebase )
-            ( cd $src/tools/lldb && git checkout -q ${version_lldb}  )
+            ( cd ${src_lldb} && git pull --rebase )
+            ( cd ${src_lldb} && git checkout -q ${version_lldb}  )
         fi
     fi
 
@@ -325,7 +327,7 @@ if [ "${perform_clone}" == "1" ]; then
         b=`basename $i`
         ( cd $src
           echo === $i
-          basename "$i" | grep -- '-' \
+          basename "$i" | grep -- '--' \
             && cd `echo $b | awk -v src=$src -F '--' \
                '{printf("%s/%s/%s", src, $1, $2);}'`;
           pwd
@@ -469,6 +471,10 @@ for stage in 1 2 3; do
         exit 1
     fi
 done
+
+#if [ "${perform_lldb_build}" == "1" ]; then
+#    cd ${src_lldb} && ... )
+#fi
 
 echo "===="
 echo "==== Complete log in $log"

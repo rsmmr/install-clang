@@ -148,13 +148,13 @@ shift
 
 if [ "${use_master}" != "1" ]; then
     # git version to checkout.
-    version_llvm=release_34
-    version_clang=release_34
-    version_libcxx=release_34
-    version_compilerrt=release_34
-    version_libcxxabi=753a30dd      # Latest commit at time of writing.
-    version_libcxxrt=800610         # Latest commit at time of writing.
-    version_lldb=release_34
+    version_llvm=release_35
+    version_clang=release_35
+    version_libcxx=release_35
+    version_compilerrt=master       # TODO: No 3.5 branch yet.
+    version_libcxxabi=master        # TODO: Insert latest commit at time of writing.
+    version_libcxxrt=master         # TODO: Insert latest commit at time of writing.
+    version_lldb=master             # TODO: No 3.5 branch yet.
 
 else
     # git version to checkout.
@@ -194,7 +194,7 @@ fi
 #fi
 
 #### Copy all output to log file.
-log=`basename $0`.$$.log
+log=install.$$.log
 echo "Recording log in $log ..."
 exec > >(tee $log)
 exec 2>&1
@@ -342,29 +342,6 @@ echo Changing directory to $src ...
 cd $src
 
 if [ "${perform_abi}" == "1" ]; then
-
-    if [ "${use_libcxxabi}" == "1" ]; then
-        ### Build libc++abi. Note that even though it's in the
-        ### llvm/projects directory, it's not automatically included
-        ### in the built as it doesn't provide a CMakeLists.txt yet.
-
-        echo ===
-        echo === Building libcxxabi ...
-        echo ===
-
-        if [ -x "$prefix/bin/clang++" ]; then
-            cxx="$prefix/bin/clang++"
-            cc="$prefix/bin/clang"      # We assume it exists as well.
-        fi
-
-        ( cd ${src_libcxxabi}/lib && CXX="$cxx -I${src_libcxx}/include" PREFIX=$prefix TRIPLE=$triple ./buildit )
-
-        if [ "$?" != "0" ] ; then
-            echo Failed to build libcxxabi
-            exit 1
-        fi
-    fi
-
     if [ "${use_libcxxrt}" == "1" ]; then
         echo ===
         echo === Building libcxxrt ...
@@ -388,12 +365,16 @@ if [ "${use_libcxxabi}" == "1" ]; then
         dylib=`install_shared_lib ${src_libcxxabi}/lib/libc++abi`
         addl_ldflags="${addl_ldflags} -Wl,-reexport_library,$dylib"
         addl_ldflags="${addl_ldflags} -Wl,-sub_library,libc++abi"
+        CMAKE_stage1=""
+        CMAKE_stage2=$CMAKE_stage1
+        CMAKE_stage3=$CMAKE_stage1
     else
         libcxxabi_static=libc++abi.a
         test -d $libcxx_lib || mkdir -p $libcxx_lib
         cp -v $src_libcxxabi/lib/$libcxxabi_static $libcxx_lib
-        CMAKE_stage1="-DLIBCXX_LIBCXXABI_WHOLE_ARCHIVE=on"
+        CMAKE_stage1="-DLIBCXX_LIBCXXABI_WHOLE_ARCHIVE=on -DLIBCXXABI_ENABLE_SHARED=off"
         CMAKE_stage2=$CMAKE_stage1
+        CMAKE_stage3=$CMAKE_stage1
     fi
 
     addl_cmake="${addl_cmake} -DLIBCXX_CXX_ABI=libcxxabi -DLIBCXX_LIBCXXABI_INCLUDE_PATHS=${src_libcxxabi}/include"

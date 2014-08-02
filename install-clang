@@ -150,7 +150,7 @@ if [ "${use_master}" != "1" ]; then
     # git version to checkout.
     version_llvm=release_35
     version_clang=release_35
-    version_libcxx=release_35
+    version_libcxx=master           # TODO: 3.5 doesn't have the libcxx-in-tree build stuff yet.
     version_compilerrt=master       # TODO: No 3.5 branch yet.
     version_libcxxabi=master        # TODO: Insert latest commit at time of writing.
     version_libcxxrt=master         # TODO: Insert latest commit at time of writing.
@@ -369,15 +369,17 @@ if [ "${use_libcxxabi}" == "1" ]; then
         CMAKE_stage2=$CMAKE_stage1
         CMAKE_stage3=$CMAKE_stage1
     else
-        libcxxabi_static=libc++abi.a
-        test -d $libcxx_lib || mkdir -p $libcxx_lib
-        cp -v $src_libcxxabi/lib/$libcxxabi_static $libcxx_lib
+        # libcxxabi_static=libc++abi.a
+        # test -d $libcxx_lib || mkdir -p $libcxx_lib
+        # cp -v $src_libcxxabi/lib/$libcxxabi_static $libcxx_lib
         CMAKE_stage1="-DLIBCXX_LIBCXXABI_WHOLE_ARCHIVE=on -DLIBCXXABI_ENABLE_SHARED=off"
         CMAKE_stage2=$CMAKE_stage1
         CMAKE_stage3=$CMAKE_stage1
     fi
 
-    addl_cmake="${addl_cmake} -DLIBCXX_CXX_ABI=libcxxabi -DLIBCXX_LIBCXXABI_INCLUDE_PATHS=${src_libcxxabi}/include"
+    # No longer define here, as libcxx looks for in-tree libc++abi by default now.
+    # -DLIBCXX_LIBCXXABI_INCLUDE_PATHS=${src_libcxxabi}/include -DLIBCXX_CXX_ABI=libcxxabi
+    addl_cmake="${addl_cmake}"
 fi
 
 if [ "${use_libcxxrt}" == "1" ]; then

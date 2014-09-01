@@ -187,15 +187,6 @@ if [ ! -d $prefix ]; then
     fi
 fi
 
-#if [ "$mode" == "update" ]; then
-#    for d in $prefix $prefix/bin $src; do
-#        if [ ! -d $d ]; then
-#            echo "$d does not exist."
-#            exit 1
-#        fi
-#    done
-#fi
-
 #### Copy all output to log file.
 log=install.$$.log
 echo "Recording log in $log ..."
@@ -231,35 +222,6 @@ function st
 {
     eval echo \$\{$1_stage${stage}\}
 }
-
-function install_shared_lib
-{
-    src=$1
-    base=`basename $src`
-    lib=`ls $src.*$soext*`
-    major=`echo $lib | sed 's#.*\.\([0-9]\)\..*#\\1#g'`
-
-    if [ "$major" == "$lib" ]; then
-        major=1
-    fi
-
-    dest=$libcxx_lib/$base.`printf $somask $major`
-    link=$libcxx_lib/$base.$soext
-
-    # echo "src   : $src"
-    # echo "base  : $base"
-    # echo "lib   : $lib"
-    # echo "major : $major"
-    # echo "dest  : $dest"
-    # echo "link  : $link"
-
-    test -d $libcxx_lib && rm -f $dest $link || mkdir $libcxx_lib
-    cp $lib $dest
-    ln -s $dest $link
-
-    echo $dest
-}
-
 
 #### Clone reposistories.
 
@@ -375,31 +337,12 @@ fi
 if [ "${use_libcxxabi}" == "1" ]; then
 
     if [ "$OS" == "Darwin" ]; then
-        #dylib=`install_shared_lib ${src_libcxxabi}/lib/libc++abi`
-        # Reexport libc++abi so that it's available by default.
-        #addl_ldflags="${addl_ldflags} -Wl,-reexport_library,$dylib"
-        #addl_ldflags="${addl_ldflags} -Wl,-sub_library,libc++abi"
-        # addl_ldflags="${addl_ldflags} -Wl,-reexport-lc++abi"
-        # Make sure to not pick up a previously compiled custom version, in case something conflicts.
         CMAKE_stage1="-DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++"
-#        CMAKE_stage1="-DLIBCXXABI_ENABLE_SHARED=on"
-#        CMAKE_stage1="$CMAKE_stage1 -DLIBCXX_CXX_ABI_LIBNAME=libcxxabi"
-#        CMAKE_stage1="$CMAKE_stage1 -DLIBCXX_LIBCXXABI_INCLUDE_PATHS=${src}/projects/libcxxabi/include"
-#        CMAKE_stage1="$CMAKE_stage1 -DLIBCXX_CXX_ABI_INTREE=1"
-#        CMAKE_stage2=$CMAKE_stage1
-#        CMAKE_stage3=$CMAKE_stage1
     else
-        # libcxxabi_static=libc++abi.a
-        # test -d $libcxx_lib || mkdir -p $libcxx_lib
-        # cp -v $src_libcxxabi/lib/$libcxxabi_static $libcxx_lib
         CMAKE_stage1="-DLIBCXX_LIBCXXABI_WHOLE_ARCHIVE=on -DLIBCXXABI_ENABLE_SHARED=off"
         CMAKE_stage2=$CMAKE_stage1
         CMAKE_stage3=$CMAKE_stage1
     fi
-
-    # No longer define here, as libcxx looks for in-tree libc++abi by default now.
-    # -DLIBCXX_LIBCXXABI_INCLUDE_PATHS=${src_libcxxabi}/include -DLIBCXX_CXX_ABI=libcxxabi
-    addl_cmake="${addl_cmake}"
 fi
 
 if [ "${use_libcxxrt}" == "1" ]; then
@@ -477,9 +420,9 @@ for stage in 1 2 3; do
     fi
 done
 
-#if [ "${perform_lldb_build}" == "1" ]; then
-#    cd ${src_lldb} && ... )
-#fi
+if [ "${perform_lldb_build}" == "1" ]; then
+    echo "Warning: Building lldb is currently not supported by this script."
+fi
 
 echo "===="
 echo "==== Complete log in $log"

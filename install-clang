@@ -264,7 +264,7 @@ if [ "${perform_clone}" == "1" ]; then
             repo=`echo $line | cut -d ' ' -f 1`
             commits=`echo $line | cut -d ' ' -f 2-`
             echo "Cherry-picking $commits in $repo"
-            ( cd ${src}/$repo && git cherrypick $commits )
+            ( cd ${src}/$repo && git cherry-pick $commits )
         fi
     done
 

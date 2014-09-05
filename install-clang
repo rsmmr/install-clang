@@ -346,7 +346,7 @@ for stage in 1 2 3; do
        CXX=`st CXX` \
        CFLAGS="`st CFLAGS`" \
        CXXFLAGS="`st CXXFLAGS`" \
-       LDFLAGS="-L $libcxx_lib -Wl,-rpath,$libcxx_lib ${addl_ldflags}" \
+       LDFLAGS="${addl_ldflags}" \
        cmake -DCMAKE_BUILD_TYPE=`st BUILD_TYPE` \
              -DLLVM_REQUIRES_RTTI=1 \
              -DCMAKE_INSTALL_PREFIX=${prefix} \

@@ -142,10 +142,10 @@ if [ "${use_master}" != "1" ]; then
     # git version to checkout.
     version_llvm=release_35
     version_clang=release_35
-    version_libcxx=release_35       # XXX TODO: 3.5 doesn't have the libcxx-in-tree build stuff yet.
+    version_libcxx=release_35
     version_compilerrt=release_35
-    version_libcxxabi=master        # TODO: No 3.5 branch yet.
-    version_lldb=master             # TODO: No 3.5 branch yet.
+    version_libcxxabi=239a032       # Not 3.5 branch. Hardcoding 
+    version_lldb=master
 
     cherrypick="projects/libcxx 0c6d1a88 e515bbda f2e8c0454"  # Fix linking against in-tree libc++abi.
 

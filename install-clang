@@ -1,6 +1,5 @@
 #! /usr/bin/env bash
 #
-#
 # TODO:
 #    - Check if we still need all the patches.
 #    - Bring back the update mode.
@@ -54,10 +53,10 @@ perform_clone=1            # If 0, skip the cloning (for testing only).
 perform_abi=1              # If 0, skip libc++abi (for testing only).
 perform_stage1=1           # If 0, skip the 1st bootstrap stage (for testing only).
 perform_stage2=1           # If 0, skip the 2nd stage compiling LLVM/clang against libc++ (for testing only).
-perform_stage3=0           # If 1, build a 3rd stage LLVM with assertions enabled.
 perform_lldb_build=0       # If 1, attempt to build LLDB.
-stage3_llvm_with_debug=0   # If 1, build the 3rd stage LLVM in debug mode.
+assertions=off             # If "on", enable LLVM assertions.
 parallelism=1              # The value X to pass to make -j X to build in parallel.
+buildtype=RelWithDebInfo   # LLVM/clang build type.
 mode=install               # Install from scratch.
 
 usage()
@@ -75,6 +74,8 @@ usage()
     echo "    -s <stage> begin build from <stage> [1, 2, 3]"
     echo "    -c         skip cloning repositories, assume they are in place"
     echo "    -u         update an existing build in <prefix> instead of installing new"
+    echo "    -A         enables assertions in LLVM libraries"
+    echo "    -b         build type (Release, Debug, RelWithDebInfo) [default: ${buildtype}]"
     echo "    -h|-?      display this help"
     echo ""
     echo "Environment variables:"
@@ -82,7 +83,7 @@ usage()
     echo "    CXX        path to the C++ compiler for bootstrapping"
 }
 
-while getopts "a:j:lms:uch?" opt ; do
+while getopts "Ab::j:lms:uch?" opt ; do
     case "$opt" in
         c)
             perform_clone=0
@@ -114,13 +115,22 @@ while getopts "a:j:lms:uch?" opt ; do
                 perform_stage2=0
                 perform_stage3=1
             else
-                echo 'stage parameter must be in [1,3].'
+                echo 'stage parameter must be in [1,2].'
                 exit 1
             fi
             ;;
         u)
             mode=update
             ;;
+
+        A)
+            assertions=on
+            ;;
+
+        b)
+            buildtype=$OPTARG
+            ;;
+
     esac
 done
 
@@ -296,41 +306,34 @@ else
     CMAKE_stage3=$CMAKE_stage1
 fi
 
+CMAKE_stage1="$CMAKE_stage1 -DLLVM_ENABLE_ASSERTIONS=${assertions}"
+CMAKE_stage2="$CMAKE_stage2 -DLLVM_ENABLE_ASSERTIONS=${assertions}"
+CMAKE_stage3="$CMAKE_stage3 -DLLVM_ENABLE_ASSERTIONS=${assertions}"
+
+
 #### Configure the stages.
 
 # Stage 1 options.
 
-BUILD_TYPE_stage1=Release
+BUILD_TYPE_stage1=${buildtype}
 CC_stage1="$cc"
 CXX_stage1="$cxx"
 CXXFLAGS_stage1=""
-CMAKE_stage1="${CMAKE_stage1} -DLLVM_ENABLE_ASSERTIONS=off"
+CMAKE_stage1="${CMAKE_stage1}"
 
 # Stage 2 options.
 
-BUILD_TYPE_stage2=Release
+BUILD_TYPE_stage2=${buildtype}
 CC_stage2=$prefix/bin/clang
 CXX_stage2=$prefix/bin/clang++
 CFLAGS_stage2="-stdlib=libc++"
 CXXFLAGS_stage2="-stdlib=libc++"
-CMAKE_stage2="${CMAKE_stage2} -DLLVM_ENABLE_ASSERTIONS=off"
-
-# Stage 3 options.
-
-if [ "${stage3_llvm_with_debug}" != "1" ]; then
-    BUILD_TYPE_stage3=RelWithDebInfo
-else
-    BUILD_TYPE_stage3=Debug
-fi
-
-CC_stage3=$prefix/bin/clang
-CXX_stage3=$prefix/bin/clang++
-CXXFLAGS_stage3="-stdlib=libc++"
-CMAKE_stage3="${CMAKE_stage3} -DLLVM_ENABLE_ASSERTIONS=on -DLLVM_EXTERNAL_CLANG_BUILD=off -DLLVM_EXTERNAL_LIBCXX_BUILD=off -DLLVM_EXTERNAL_COMPILER_RT_BUILD=off"
+CMAKE_stage2="${CMAKE_stage2}"
+# -DCMAKE_INSTALL_RPATH \"\$ORIGIN/../lib:${libcxx_lib}\""
 
 #### Compile the stages.
 
-for stage in 1 2 3; do
+for stage in 1 2; do
      if [ "`st perform`" == "0" ]; then
          continue
      fi

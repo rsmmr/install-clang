@@ -306,10 +306,9 @@ else
     CMAKE_stage3=$CMAKE_stage1
 fi
 
-CMAKE_stage1="$CMAKE_stage1 -DLLVM_ENABLE_ASSERTIONS=${assertions}"
-CMAKE_stage2="$CMAKE_stage2 -DLLVM_ENABLE_ASSERTIONS=${assertions}"
-CMAKE_stage3="$CMAKE_stage3 -DLLVM_ENABLE_ASSERTIONS=${assertions}"
-
+CMAKE_stage1="$CMAKE_stage1 -DBUILD_SHARED_LIBS=on -DLLVM_ENABLE_ASSERTIONS=${assertions}"
+CMAKE_stage2="$CMAKE_stage2 -DBUILD_SHARED_LIBS=on -DLLVM_ENABLE_ASSERTIONS=${assertions}"
+CMAKE_stage3="$CMAKE_stage3 -DBUILD_SHARED_LIBS=on -DLLVM_ENABLE_ASSERTIONS=${assertions}"
 
 #### Configure the stages.
 

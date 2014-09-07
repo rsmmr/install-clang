@@ -1,29 +1,33 @@
-From 7df2eaaf9023167d7af9be6887d9ce9a6e0b4e85 Mon Sep 17 00:00:00 2001
+From 91c9f534f690cf815e9766727a99c9da772f49ed Mon Sep 17 00:00:00 2001
 From: Robin Sommer <robin@icir.org>
-Date: Sat, 19 Jan 2013 11:02:57 -0800
+Date: Sun, 15 Jun 2014 19:57:19 -0700
 Subject: [PATCH] Adapting linker arguments.
 
-    - Adding -L<prefix>/lib to default linker arguments.
-    - On Linux, and -rpath.
+ - Adding -L<prefix>/lib to default linker arguments.
+ - On Linux, and -rpath.
 ---
- lib/Driver/Tools.cpp | 4 ++++
- 1 file changed, 4 insertions(+)
+ lib/Driver/Tools.cpp | 8 ++++++++
+ 1 file changed, 8 insertions(+)
 
 diff --git a/lib/Driver/Tools.cpp b/lib/Driver/Tools.cpp
-index ee75635..846091c 100644
+index e49267a..34e28f7 100644
 --- a/lib/Driver/Tools.cpp
 +++ b/lib/Driver/Tools.cpp
-@@ -188,6 +188,10 @@ static void AddLinkerInputs(const ToolChain &TC,
- 
-   // LIBRARY_PATH - included following the user specified library paths.
-   addDirectoryList(Args, CmdArgs, "-L", "LIBRARY_PATH");
-+  CmdArgs.push_back(Args.MakeArgString("-L" + D.InstalledDir + "/../lib"));
+@@ -210,6 +210,14 @@ static void AddLinkerInputs(const ToolChain &TC,
+   //                and only supported on native toolchains.
+   if (!TC.isCrossCompiling())
+     addDirectoryList(Args, CmdArgs, "-L", "LIBRARY_PATH");
 +
-+  if (TC.getTriple().getOS() == llvm::Triple::Linux)
-+    CmdArgs.push_back(Args.MakeArgString("-rpath=" + D.InstalledDir + "/../lib"));
++  if (!TC.isCrossCompiling()) {
++    CmdArgs.push_back(Args.MakeArgString("-L" + D.InstalledDir + "/../lib"));
++
++    if (TC.getTriple().getOS() == llvm::Triple::Linux)
++      CmdArgs.push_back(Args.MakeArgString("-rpath=" + D.InstalledDir + "/../lib"));
++  }
++
  }
  
  /// \brief Determine whether Objective-C automated reference counting is
 -- 
-1.8.3.4
+1.9.3
 

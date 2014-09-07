@@ -1,8 +1,6 @@
 #! /usr/bin/env bash
 #
 # TODO:
-#    - Check if we still need all the patches.
-#    - Bring back the update mode.
 #    - Try adding lldb once again.
 
 OS=`uname`
@@ -68,15 +66,15 @@ usage()
     printf "Usage: %s [<options>] <install-prefix>\n" $(basename $0)
     echo ""
     echo "Available options:"
-    echo "    -j <n>     build with <n> threads in parallel [default: ${parallelism}]"
-    echo "    -l         attempt to build LLDB (experimental)"
-    echo "    -m         use git/master instead of preconfigured versions"
-    echo "    -s <stage> begin build from <stage> [1, 2, 3]"
-    echo "    -c         skip cloning repositories, assume they are in place"
-    echo "    -u         update an existing build in <prefix> instead of installing new"
     echo "    -A         enables assertions in LLVM libraries"
     echo "    -b         build type (Release, Debug, RelWithDebInfo) [default: ${buildtype}]"
+    echo "    -c         skip cloning repositories, assume they are in place"
     echo "    -h|-?      display this help"
+    echo "    -j <n>     build with <n> threads in parallel [default: ${parallelism}]"
+#   echo "    -l         attempt to build LLDB (experimental)"
+    echo "    -m         use git/master instead of preconfigured versions"
+    echo "    -s <stage> begin build from <stage> [1, 2]"
+    echo "    -u         update an existing build in <prefix> instead of installing new"
     echo ""
     echo "Environment variables:"
     echo "    CC         path to the C compiler for bootstrapping"
@@ -328,7 +326,6 @@ CXX_stage2=$prefix/bin/clang++
 CFLAGS_stage2="-stdlib=libc++"
 CXXFLAGS_stage2="-stdlib=libc++"
 CMAKE_stage2="${CMAKE_stage2}"
-# -DCMAKE_INSTALL_RPATH \"\$ORIGIN/../lib:${libcxx_lib}\""
 
 #### Compile the stages.
 

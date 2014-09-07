@@ -77,18 +77,18 @@ News
 The install-clang script for LLVM 3.5 comes with a few changes
 compared to earlier version:
 
-    - The script now generally shared libraries for LLVM and clang,
-      rather than static ones.
+* The script now generally shared libraries for LLVM and clang, rather
+  than static ones.
 
-    - As libc++abi now works well on Linux as well, we use it
-      generally and no longer support libcxxrt.
+* As libc++abi now works well on Linux as well, we use it generally
+  and no longer support libcxxrt.
 
-    - There's no 3rd phase anymore building assertion-enabled LLVM
-      libraries, as changing compilation options isn't useful with
-      shared libraries.
+* There's no 3rd phase anymore building assertion-enabled LLVM
+  libraries, as changing compilation options isn't useful with shared
+  libraries.
 
-    - There are now command line options to select build mode and
-      assertions explicitly.
+* There are now command line options to select build mode and
+  assertions explicitly.
 
 [1]: http://clang.llvm.org
 [2]: http://www.llvm.org

@@ -57,6 +57,14 @@ parallelism=1              # The value X to pass to make -j X to build in parall
 buildtype=RelWithDebInfo   # LLVM/clang build type.
 mode=install               # Install from scratch.
 
+if eval ${cxx} --version | grep -q clang; then
+    perform_stage0=0
+    have_clang=1
+else
+    perform_stage0=1
+    have_clang=0
+fi
+
 usage()
 {
     if [ "${use_libcxxabi}" == "1" ]; then
@@ -73,7 +81,7 @@ usage()
     echo "    -j <n>     build with <n> threads in parallel [default: ${parallelism}]"
 #   echo "    -l         attempt to build LLDB (experimental)"
     echo "    -m         use git/master instead of preconfigured versions"
-    echo "    -s <stage> begin build from <stage> [1, 2]"
+    echo "    -s <stage> begin build from <stage> [0, 1, 2]"
     echo "    -u         update an existing build in <prefix> instead of installing new"
     echo ""
     echo "Environment variables:"
@@ -100,20 +108,20 @@ while getopts "Ab::j:lms:uch?" opt ; do
             use_master=1
             ;;
         s)
-            if [ "$OPTARG" == "1" ] ; then
+            if [ "$OPTARG" == "0" ]; then
+                perform_stage0=1
                 perform_stage1=1
                 perform_stage2=1
-                perform_stage3=1
-            elif [ "$OPTARG" == "2" ] ; then
+            elif [ "$OPTARG" == "1" ]; then
+                perform_stage0=0
+                perform_stage1=1
+                perform_stage2=1
+            elif [ "$OPTARG" == "2" ]; then
+                perform_stage0=0
                 perform_stage1=0
                 perform_stage2=1
-                perform_stage3=1
-            elif [ "$OPTARG" == "3" ] ; then
-                perform_stage1=0
-                perform_stage2=0
-                perform_stage3=1
             else
-                echo 'stage parameter must be in [1,2].'
+                echo 'stage parameter must be in [0,1,2].'
                 exit 1
             fi
             ;;
@@ -209,7 +217,27 @@ function st
     eval echo \$\{$1_stage${stage}\}
 }
 
+function add_include_path
+{
+    include=$1
+    search_patch=$2
+
+    path=`find "${search_patch}" | grep "${include}$" | awk '{print length, $0;}' | sort -n | head -1 | awk '{printf("%s", $2)}'`
+
+    if [ "$path" != "" ]; then
+        path=`echo -n ${path} | sed "s#${include}##g"`
+        if [ "${default_includes}" = "" ]; then
+            echo -n "${path}"
+        else
+            echo -n "${default_includes}:${path}"
+        fi
+    fi
+}
+
 #### Clone reposistories.
+
+export GIT_COMMITTER_EMAIL="`whoami`@localhost"
+export GIT_COMMITTER_NAME="`whoami`"
 
 d=`dirname $0`
 patches=`cd $d; pwd`/patches
@@ -293,43 +321,66 @@ if [ "${perform_clone}" == "1" ]; then
 
 fi
 
-echo Changing directory to $src ...
-cd $src
-
 if [ "$OS" == "Darwin" ]; then
     CMAKE_stage1="-DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++"
-else
+
+elif [ "$OS" == "Linux" ]; then
     CMAKE_stage1="-DLIBCXX_LIBCXXABI_WHOLE_ARCHIVE=on -DLIBCXXABI_ENABLE_SHARED=off -DBUILD_SHARED_LIBS=on"
     CMAKE_stage2=$CMAKE_stage1
     CMAKE_stage3=$CMAKE_stage1
+
+    default_includes=`add_include_path features.h /usr/include`
+    default_includes=`add_include_path sys/cdefs.h /usr/include`
+
+else
+    echo "OS ${OS} not supported"
+    exit 1
 fi
 
-CMAKE_stage1="$CMAKE_stage1 -DBUILD_SHARED_LIBS=on -DLLVM_ENABLE_ASSERTIONS=${assertions}"
+CMAKE_stage0="$CMAKE_stage0 -DBUILD_SHARED_LIBS=on -DLLVM_EXTERNAL_LIBCXX_BUILD=off -DLLVM_EXTERNAL_LIBCXXABI_BUILD=off -DLLVM_EXTERNAL_COMPILER_RT_BUILD=off"
+CMAKE_stage1="$CMAKE_stage1 -DBUILD_SHARED_LIBS=on -DLLVM_ENABLE_ASSERTIONS=${assertions} -DLLVM_EXTERNAL_LIBCXXABI_BUILD=on"
 CMAKE_stage2="$CMAKE_stage2 -DBUILD_SHARED_LIBS=on -DLLVM_ENABLE_ASSERTIONS=${assertions}"
-CMAKE_stage3="$CMAKE_stage3 -DBUILD_SHARED_LIBS=on -DLLVM_ENABLE_ASSERTIONS=${assertions}"
 
 #### Configure the stages.
 
-# Stage 1 options.
+# Stage 0 options. Get us a clang.
 
-BUILD_TYPE_stage1=${buildtype}
-CC_stage1="$cc"
-CXX_stage1="$cxx"
+CC_stage0="$cc"
+CXX_stage0="$cxx"
+CXXFLAGS_stage0=""
+CMAKE_stage0="${CMAKE_stage0}"
+BUILD_TYPE_stage0=${buildtype}
+
+# Stage 1 options. Compile against standard libraries.
+
+if [ "${have_clang}" == "1" ]; then
+    CC_stage1="$cc"
+    CXX_stage1="$cxx"
+else
+    CC_stage1=$prefix/bin/clang
+    CXX_stage1=$prefix/bin/clang++
+    CMAKE_stage1="${CMAKE_stage1}"
+fi
+
 CXXFLAGS_stage1=""
 CMAKE_stage1="${CMAKE_stage1}"
+BUILD_TYPE_stage1=${buildtype}
 
-# Stage 2 options.
+# Stage 2 options. Compile against our own libraries.
 
-BUILD_TYPE_stage2=${buildtype}
 CC_stage2=$prefix/bin/clang
 CXX_stage2=$prefix/bin/clang++
 CFLAGS_stage2="-stdlib=libc++"
 CXXFLAGS_stage2="-stdlib=libc++"
 CMAKE_stage2="${CMAKE_stage2}"
+BUILD_TYPE_stage2=${buildtype}
 
 #### Compile the stages.
 
-for stage in 1 2; do
+echo Changing directory to $src ...
+cd $src
+
+for stage in 0 1 2; do
      if [ "`st perform`" == "0" ]; then
          continue
      fi

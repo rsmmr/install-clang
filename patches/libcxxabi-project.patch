@@ -1,0 +1,29 @@
+From 29b57eada9596ef3fde4f445d35bf265c3f5e7e2 Mon Sep 17 00:00:00 2001
+From: Root <root@localhost>
+Date: Fri, 26 Sep 2014 03:45:58 +0000
+Subject: [PATCH] Adding libcxxabi to list of know projects.
+
+---
+ projects/CMakeLists.txt | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/projects/CMakeLists.txt b/projects/CMakeLists.txt
+index e23a277..2f025bd 100644
+--- a/projects/CMakeLists.txt
++++ b/projects/CMakeLists.txt
+@@ -6,6 +6,7 @@ foreach(entry ${entries})
+   if(IS_DIRECTORY ${entry} AND EXISTS ${entry}/CMakeLists.txt)
+     if((NOT ${entry} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR}/compiler-rt) AND
+        (NOT ${entry} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR}/dragonegg) AND
++       (NOT ${entry} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR}/libcxxabi) AND
+        (NOT ${entry} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR}/libcxx))
+       add_subdirectory(${entry})
+     endif()
+@@ -26,3 +27,4 @@ if(${LLVM_BUILD_RUNTIME})
+ endif()
+ 
+ add_llvm_external_project(dragonegg)
++add_llvm_external_project(libcxxabi)
+-- 
+1.9.1
+

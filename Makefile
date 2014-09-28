@@ -1,5 +1,5 @@
 
-DOCKER_IMAGE="rsmmr/llvm35"
+IMAGE="rsmmr/clang:3.5"
 
 all:
 
@@ -7,8 +7,10 @@ all:
 # On Fedora: add "--storage-opt dm.basesize=30G" to /etc/sysconfig/docker.
 
 docker-build:
-	docker build -t ${DOCKER_IMAGE} .
+	docker build -t ${IMAGE} .
 
 docker-run:
-	docker run -i -t ${DOCKER_IMAGE} /bin/bash
+	docker run -i -t ${IMAGE}
 
+docker-push:
+	docker push ${IMAGE}

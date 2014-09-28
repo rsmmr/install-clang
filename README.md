@@ -74,7 +74,7 @@ Docker
 ------
 
 install-clang comes with a Dockerfile to build a Docker image, based
-on Ubuntu, with LLVM/clang in /opt/llvm:
+on Ubuntu, with clang/LLVM then in /opt/llvm:
 
     # make docker-build && make docker-run
     [... get a beer ...]
@@ -84,6 +84,9 @@ on Ubuntu, with LLVM/clang in /opt/llvm:
     Thread model: posix
     root@f39b941f177c:/# which clang
     /opt/llvm/bin/clang
+
+A prebuilt image is available at
+https://registry.hub.docker.com/u/rsmmr/clang.
 
 News
 ----

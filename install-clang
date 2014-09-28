@@ -52,6 +52,7 @@ perform_abi=1              # If 0, skip libc++abi (for testing only).
 perform_stage1=1           # If 0, skip the 1st bootstrap stage (for testing only).
 perform_stage2=1           # If 0, skip the 2nd stage compiling LLVM/clang against libc++ (for testing only).
 perform_lldb_build=0       # If 1, attempt to build LLDB.
+perform_cleanup=0          # If 1, delete all source and build directories.
 assertions=off             # If "on", enable LLVM assertions.
 parallelism=1              # The value X to pass to make -j X to build in parallel.
 buildtype=RelWithDebInfo   # LLVM/clang build type.
@@ -77,6 +78,7 @@ usage()
     echo "    -A         enables assertions in LLVM libraries"
     echo "    -b         build type (Release, Debug, RelWithDebInfo) [default: ${buildtype}]"
     echo "    -c         skip cloning repositories, assume they are in place"
+    echo "    -C         clean up after build by deleting the LLVM/clang source/build directories"
     echo "    -h|-?      display this help"
     echo "    -j <n>     build with <n> threads in parallel [default: ${parallelism}]"
 #   echo "    -l         attempt to build LLDB (experimental)"
@@ -89,10 +91,13 @@ usage()
     echo "    CXX        path to the C++ compiler for bootstrapping"
 }
 
-while getopts "Ab::j:lms:uch?" opt ; do
+while getopts "Ab::j:lms:ucCh?" opt ; do
     case "$opt" in
         c)
             perform_clone=0
+            ;;
+        C)
+            perform_cleanup=1
             ;;
         h|\?)
             usage
@@ -418,6 +423,11 @@ done
 
 if [ "${perform_lldb_build}" == "1" ]; then
     echo "Warning: Building lldb is currently not supported by this script."
+fi
+
+if [ "${perform_cleanup}" == "1" ]; then
+    echo Deleting $src ...
+    rm -rf "${src}"
 fi
 
 echo "===="

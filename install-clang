@@ -57,6 +57,7 @@ assertions=off             # If "on", enable LLVM assertions.
 parallelism=1              # The value X to pass to make -j X to build in parallel.
 buildtype=RelWithDebInfo   # LLVM/clang build type.
 mode=install               # Install from scratch.
+targets=host               # LLVM_TARGETS_TO_BUILD ("all" builds them all).
 
 if eval ${cxx} --version | grep -q clang; then
     perform_stage0=0
@@ -342,9 +343,9 @@ else
     exit 1
 fi
 
-CMAKE_stage0="$CMAKE_stage0 -DBUILD_SHARED_LIBS=on -DLLVM_EXTERNAL_LIBCXX_BUILD=off -DLLVM_EXTERNAL_LIBCXXABI_BUILD=off -DLLVM_EXTERNAL_COMPILER_RT_BUILD=off"
-CMAKE_stage1="$CMAKE_stage1 -DBUILD_SHARED_LIBS=on -DLLVM_ENABLE_ASSERTIONS=${assertions} -DLLVM_EXTERNAL_LIBCXXABI_BUILD=on"
-CMAKE_stage2="$CMAKE_stage2 -DBUILD_SHARED_LIBS=on -DLLVM_ENABLE_ASSERTIONS=${assertions}"
+CMAKE_stage0="$CMAKE_stage0 -DBUILD_SHARED_LIBS=on -DLLVM_TARGETS_TO_BUILD=${targets} -DLLVM_EXTERNAL_LIBCXX_BUILD=off -DLLVM_EXTERNAL_LIBCXXABI_BUILD=off -DLLVM_EXTERNAL_COMPILER_RT_BUILD=off"
+CMAKE_stage1="$CMAKE_stage1 -DBUILD_SHARED_LIBS=on -DLLVM_TARGETS_TO_BUILD=${targets} -DLLVM_ENABLE_ASSERTIONS=${assertions} -DLLVM_EXTERNAL_LIBCXXABI_BUILD=on"
+CMAKE_stage2="$CMAKE_stage2 -DBUILD_SHARED_LIBS=on -DLLVM_TARGETS_TO_BUILD=${targets} -DLLVM_ENABLE_ASSERTIONS=${assertions}"
 
 #### Configure the stages.
 

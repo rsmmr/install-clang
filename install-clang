@@ -52,6 +52,8 @@ perform_abi=1              # If 0, skip libc++abi (for testing only).
 perform_stage1=1           # If 0, skip the 1st bootstrap stage (for testing only).
 perform_stage2=1           # If 0, skip the 2nd stage compiling LLVM/clang against libc++ (for testing only).
 perform_lldb_build=0       # If 1, attempt to build LLDB.
+perform_lld_build=0        # If 1, attempt to build LLDB.
+perform_extra_build=1      # If 1, attempt to build clang-extra tools.
 perform_cleanup=0          # If 1, delete all source and build directories.
 assertions=off             # If "on", enable LLVM assertions.
 parallelism=1              # The value X to pass to make -j X to build in parallel.
@@ -82,7 +84,6 @@ usage()
     echo "    -C         clean up after build by deleting the LLVM/clang source/build directories"
     echo "    -h|-?      display this help"
     echo "    -j <n>     build with <n> threads in parallel [default: ${parallelism}]"
-#   echo "    -l         attempt to build LLDB (experimental)"
     echo "    -m         use git/master instead of preconfigured versions"
     echo "    -s <stage> begin build from <stage> [0, 1, 2]"
     echo "    -u         update an existing build in <prefix> instead of installing new"
@@ -106,9 +107,6 @@ while getopts "Ab::j:lms:ucCh?" opt ; do
             ;;
         j)
             parallelism=$OPTARG
-            ;;
-        l)
-            perform_lldb_build=1
             ;;
         m)
             use_master=1
@@ -157,7 +155,9 @@ if [ "${use_master}" != "1" ]; then
     version_libcxx=release_35
     version_compilerrt=release_35
     version_libcxxabi=239a032       # Not 3.5 branch. Hardcoding 
-    version_lldb=master
+    version_lldb=master             # No 3.5 branch. Probably won't work.
+    version_lld=master              # No 3.5 branch. Probably won't work.
+    version_extra=release_35
 
     cherrypick="projects/libcxx 0c6d1a88 e515bbda f2e8c0454"  # Fix linking against in-tree libc++abi.
 
@@ -169,6 +169,8 @@ else
     version_compilerrt=master
     version_libcxxabi=master
     version_lldb=master
+    version_lld=master
+    version_extra=master
 fi
 
 if [ "$mode" == "" -o "$prefix" == "" ]; then
@@ -212,6 +214,7 @@ src_libcxxabi=${src}/projects/libcxxabi
 src_libcxx=${src}/projects/libcxx
 src_compilerrt=${src}/projects/compiler-rt
 src_lldb=${src}/lldb
+src_lld=${src}/lld
 libcxx_include=$prefix/include/c++/v1
 libcxx_lib=$prefix/lib
 default_includes=${libcxx_include}:/usr/include
@@ -238,6 +241,27 @@ function add_include_path
             echo -n "${default_includes}:${path}"
         fi
     fi
+}
+
+function apply_patch
+{
+    patch=$1
+    base=`basename $patch`
+
+    cwd=`pwd`
+
+    cd $src
+
+    if basename "$patch" | grep -q -- '--'; then
+        dir=`echo $base | awk -v src=$src -F '--' '{printf("%s/%s/%s", src, $1, $2);}'`
+        if [ ! -d "$dir" ]; then
+            return
+        fi
+
+        cd $dir
+    fi
+
+    cat $patch | git am -3
 }
 
 #### Clone reposistories.
@@ -273,10 +297,21 @@ if [ "${perform_clone}" == "1" ]; then
         ( cd $src/projects && git clone http://llvm.org/git/libcxxabi )
         ( cd ${src_libcxxabi} && git checkout -q ${version_libcxxabi} )
 
+        if [ "${perform_extra_build}" == "1" ]; then
+            ( cd $src/tools && git clone http://llvm.org/git/clang-tools-extra.git extra )
+            ( cd $src/tools/extra && git checkout -q ${version_extra} )
+        fi
+
         if [ "${perform_lldb_build}" == "1" ]; then
             ( cd `dirname ${src_lldb}` && git clone http://llvm.org/git/lldb `basename ${src_lldb}`)
             ( cd ${src_lldb} && git checkout -q ${version_lldb}  )
         fi
+
+        if [ "${perform_lld_build}" == "1" ]; then
+            ( cd `dirname ${src_lld}` && git clone http://llvm.org/git/lld `basename ${src_lld}`)
+            ( cd ${src_lld} && git checkout -q ${version_lld}  )
+        fi
+
     else
         echo Changing directory to `dirname $src` for updating ...
         cd `dirname $src`
@@ -294,9 +329,19 @@ if [ "${perform_clone}" == "1" ]; then
         ( cd ${src_libcxxabi} && git pull --rebase )
         ( cd ${src_libcxxabi} && git checkout -q ${version_libcxxabi} )
 
+        if [ "${perform_extra_build}" == "1" ]; then
+            ( cd $src/tools/extra && git pull --rebase )
+            ( cd $src/tools/extra && git checkout -q ${version_extra} )
+        fi
+
         if [ "${perform_lldb_build}" == "1" ]; then
             ( cd ${src_lldb} && git pull --rebase )
             ( cd ${src_lldb} && git checkout -q ${version_lldb}  )
+        fi
+
+        if [ "${perform_lld_build}" == "1" ]; then
+            ( cd ${src_lld} && git pull --rebase )
+            ( cd ${src_lld} && git checkout -q ${version_lld}  )
         fi
     fi
 
@@ -312,15 +357,7 @@ if [ "${perform_clone}" == "1" ]; then
 
     # Apply any patches we might need.
     for i in $patches/*; do
-        echo Applying $i ...
-        b=`basename $i`
-        ( cd $src
-          echo === $i
-          basename "$i" | grep -- '--' \
-            && cd `echo $b | awk -v src=$src -F '--' \
-               '{printf("%s/%s/%s", src, $1, $2);}'`;
-          pwd
-          cat $i | git am -3)
+        apply_patch $i
     done
 
     echo === Done applying patches
@@ -344,8 +381,8 @@ else
 fi
 
 CMAKE_common="-DBUILD_SHARED_LIBS=on -DLLVM_TARGETS_TO_BUILD=${targets}"
-CMAKE_stage0="${CMAKE_common} ${CMAKE_stage0} -DLLVM_EXTERNAL_LIBCXX_BUILD=off -DLLVM_EXTERNAL_LIBCXXABI_BUILD=off -DLLVM_EXTERNAL_COMPILER_RT_BUILD=off"
-CMAKE_stage1="${CMAKE_common} ${CMAKE_stage1} -DLLVM_ENABLE_ASSERTIONS=${assertions} -DLLVM_EXTERNAL_LIBCXXABI_BUILD=on"
+CMAKE_stage0="${CMAKE_common} ${CMAKE_stage0} -DLLVM_INCLUDE_TOOLS=bootstrap-only  -DLLVM_EXTERNAL_LIBCXX_BUILD=off -DLLVM_EXTERNAL_LIBCXXABI_BUILD=off -DLLVM_EXTERNAL_COMPILER_RT_BUILD=off"
+CMAKE_stage1="${CMAKE_common} ${CMAKE_stage1} -DLLVM_INCLUDE_TOOLS=bootstrap-only -DLLVM_ENABLE_ASSERTIONS=${assertions} -DLLVM_EXTERNAL_LIBCXXABI_BUILD=on"
 CMAKE_stage2="${CMAKE_common} ${CMAKE_stage2} -DLLVM_ENABLE_ASSERTIONS=${assertions}"
 
 #### Configure the stages.
@@ -422,10 +459,6 @@ for stage in 0 1 2; do
         exit 1
     fi
 done
-
-if [ "${perform_lldb_build}" == "1" ]; then
-    echo "Warning: Building lldb is currently not supported by this script."
-fi
 
 if [ "${perform_cleanup}" == "1" ]; then
     echo Deleting $src ...

@@ -5,7 +5,6 @@
 
 OS=`uname`
 if [ "$OS" == "Linux" ]; then
-    use_libcxxabi=1
     triple=""
     soext="so"
     somask="so.%s"
@@ -13,7 +12,6 @@ if [ "$OS" == "Linux" ]; then
     addl_cmake=""
 
 elif [ "$OS" == "Darwin" ]; then
-    use_libcxxabi=1
     triple="-apple-"
     soext="dylib"
     somask="%d.dylib"
@@ -48,7 +46,6 @@ fi
 
 use_master=0
 perform_clone=1            # If 0, skip the cloning (for testing only).
-perform_abi=1              # If 0, skip libc++abi (for testing only).
 perform_stage1=1           # If 0, skip the 1st bootstrap stage (for testing only).
 perform_stage2=1           # If 0, skip the 2nd stage compiling LLVM/clang against libc++ (for testing only).
 perform_lldb_build=0       # If 1, attempt to build LLDB.
@@ -71,10 +68,6 @@ fi
 
 usage()
 {
-    if [ "${use_libcxxabi}" == "1" ]; then
-        abi="libcxxabi"
-    fi
-
     printf "Usage: %s [<options>] <install-prefix>\n" $(basename $0)
     echo ""
     echo "Available options:"
@@ -154,7 +147,7 @@ if [ "${use_master}" != "1" ]; then
     version_clang=release_35
     version_libcxx=release_35
     version_compilerrt=release_35
-    version_libcxxabi=239a032       # Not 3.5 branch. Hardcoding 
+    version_libcxxabi=239a032       # Not 3.5 branch. Hardcoding
     version_lldb=master             # No 3.5 branch. Probably won't work.
     version_lld=master              # No 3.5 branch. Probably won't work.
     version_extra=release_35
@@ -405,11 +398,9 @@ if [ "${have_clang}" == "1" ]; then
 else
     CC_stage1=$prefix/bin/clang
     CXX_stage1=$prefix/bin/clang++
-    CMAKE_stage1="${CMAKE_stage1}"
 fi
 
 CXXFLAGS_stage1=""
-CMAKE_stage1="${CMAKE_stage1}"
 BUILD_TYPE_stage1=${buildtype}
 
 # Stage 2 options. Compile against our own libraries.

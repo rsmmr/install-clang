@@ -160,6 +160,7 @@ if [ "${use_master}" != "1" ]; then
     version_extra=release_35
 
     cherrypick="projects/libcxx 0c6d1a88 e515bbda f2e8c0454"  # Fix linking against in-tree libc++abi.
+    cherrypick="$cherrypick;/ 168d0c143"  # Correctly add libc++abi to project list.
 
 else
     # git version to checkout.
@@ -351,7 +352,8 @@ if [ "${perform_clone}" == "1" ]; then
             repo=`echo $line | cut -d ' ' -f 1`
             commits=`echo $line | cut -d ' ' -f 2-`
             echo "Cherry-picking $commits in $repo"
-            ( cd ${src}/$repo && git cherry-pick $commits )
+            ( cd ${src}/$repo \
+              && git cherry-pick --strategy=recursive -X theirs $commits )
         fi
     done
 

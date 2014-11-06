@@ -10,7 +10,9 @@ if [ "$OS" == "Linux" ]; then
     somask="so.%s"
     addl_ldflags="-ldl"
     addl_cmake=""
-
+elif [ "$OS" == "FreeBSD" ]; then
+    soext="so"
+    somask="so.%s"
 elif [ "$OS" == "Darwin" ]; then
     triple="-apple-"
     soext="dylib"
@@ -154,6 +156,7 @@ if [ "${use_master}" != "1" ]; then
 
     cherrypick="projects/libcxx 0c6d1a88 e515bbda f2e8c0454"  # Fix linking against in-tree libc++abi.
     cherrypick="$cherrypick;/ 168d0c143"  # Correctly add libc++abi to project list.
+    cherrypick="$cherrypick;/ d9aaca0ec"  # Fix libc++abi build on FreeBSD.
 
 else
     # git version to checkout.
@@ -187,7 +190,7 @@ fi
 #### Copy all output to log file.
 log=install.$$.log
 echo "Recording log in $log ..."
-exec > >(tee $log)
+exec > >(tee $log) # Requires fdescfs mounted to /dev/fd on FreeBSD.
 exec 2>&1
 
 #### Set paths and environment.
@@ -370,8 +373,8 @@ elif [ "$OS" == "Linux" ]; then
     default_includes=`add_include_path features.h /usr/include`
     default_includes=`add_include_path sys/cdefs.h /usr/include`
 
-else
-    echo "OS ${OS} not supported"
+elif [ "$OS" != "FreeBSD" ]; then
+    echo "OS $OS not supported"
     exit 1
 fi
 

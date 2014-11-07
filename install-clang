@@ -365,7 +365,7 @@ fi
 if [ "$OS" == "Darwin" ]; then
     CMAKE_stage1="-DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++"
 
-elif [ "$OS" == "Linux" ]; then
+elif [ "$OS" == "Linux" ] || [ "$OS" == "FreeBSD" ]; then
     CMAKE_stage1="-DLIBCXX_LIBCXXABI_WHOLE_ARCHIVE=on -DLIBCXXABI_ENABLE_SHARED=off -DBUILD_SHARED_LIBS=on"
     CMAKE_stage2=$CMAKE_stage1
     CMAKE_stage3=$CMAKE_stage1
@@ -373,7 +373,7 @@ elif [ "$OS" == "Linux" ]; then
     default_includes=`add_include_path features.h /usr/include`
     default_includes=`add_include_path sys/cdefs.h /usr/include`
 
-elif [ "$OS" != "FreeBSD" ]; then
+else
     echo "OS $OS not supported"
     exit 1
 fi

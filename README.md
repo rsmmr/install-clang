@@ -2,7 +2,7 @@ install-clang
 =============
 
 This script installs self-contained standalone versions of [clang][1],
-[LLVM][2], [libc++][3], and [compiler-rt][4] on Darwin and Linux,
+[LLVM][2], [libc++][3], and [compiler-rt][4] on Darwin, FreeBSD, and Linux,
 including linking clang and LLVM themselves against libc++ as well. The
 script keeps all of the installation within a given target prefix (e.g.,
 `/opt/llvm`), and hence separate from any already installed compilers,
@@ -51,8 +51,8 @@ By default, install-clang currently installs the 3.5 release branches
 of the relevant llvm.org projects. Adding `-m` on the command line
 instructs the script to use the current git master versions instead.
 The script downloads all the sources from the corresponding git
-repositories and compiles the pieces as needed. Other OSs than Darwin
-and Linux are not currently supported.
+repositories and compiles the pieces as needed. Other OSs than Darwin,
+FreeBSD, and Linux are not currently supported.
 
 The script also has an update option `-u` that allows for catching up
 with upstream repository changes without doing the complete
@@ -93,6 +93,9 @@ News
 
 The install-clang script for LLVM 3.5 comes with a few changes
 compared to earlier version:
+
+* The script now supports FreeBSD as well. (Contributed by Matthias
+  Vallentin).
 
 * The script now generally shared libraries for LLVM and clang, rather
   than static ones.

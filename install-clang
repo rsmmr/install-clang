@@ -5,20 +5,26 @@
 
 OS=`uname`
 if [ "$OS" == "Linux" ]; then
-    use_libcxxabi=1
     triple=""
     soext="so"
     somask="so.%s"
     addl_ldflags="-ldl"
     addl_cmake=""
 
+elif [ "$OS" == "FreeBSD" ]; then
+    triple=""
+    soext="so"
+    somask="so.%s"
+    addl_ldflags=""
+    addl_cmake=""
+
 elif [ "$OS" == "Darwin" ]; then
-    use_libcxxabi=1
     triple="-apple-"
     soext="dylib"
     somask="%d.dylib"
     addl_ldflags=""
     addl_cmake="-DCMAKE_OSX_ARCHITECTURES=x86_64;i386"
+
 else
     echo "OS $OS not supported by this script."
     exit 1
@@ -48,7 +54,6 @@ fi
 
 use_master=0
 perform_clone=1            # If 0, skip the cloning (for testing only).
-perform_abi=1              # If 0, skip libc++abi (for testing only).
 perform_stage1=1           # If 0, skip the 1st bootstrap stage (for testing only).
 perform_stage2=1           # If 0, skip the 2nd stage compiling LLVM/clang against libc++ (for testing only).
 perform_lldb_build=0       # If 1, attempt to build LLDB.
@@ -71,10 +76,6 @@ fi
 
 usage()
 {
-    if [ "${use_libcxxabi}" == "1" ]; then
-        abi="libcxxabi"
-    fi
-
     printf "Usage: %s [<options>] <install-prefix>\n" $(basename $0)
     echo ""
     echo "Available options:"
@@ -154,12 +155,14 @@ if [ "${use_master}" != "1" ]; then
     version_clang=release_35
     version_libcxx=release_35
     version_compilerrt=release_35
-    version_libcxxabi=239a032       # Not 3.5 branch. Hardcoding 
+    version_libcxxabi=239a032       # No 3.5 branch. Hardcoding.
     version_lldb=master             # No 3.5 branch. Probably won't work.
     version_lld=master              # No 3.5 branch. Probably won't work.
     version_extra=release_35
 
     cherrypick="projects/libcxx 0c6d1a88 e515bbda f2e8c0454"  # Fix linking against in-tree libc++abi.
+    cherrypick="$cherrypick;/ 168d0c143"  # Correctly add libc++abi to project list.
+    cherrypick="$cherrypick;/ d9aaca0ec"  # Fix libc++abi build on FreeBSD.
 
 else
     # git version to checkout.
@@ -193,7 +196,7 @@ fi
 #### Copy all output to log file.
 log=install.$$.log
 echo "Recording log in $log ..."
-exec > >(tee $log)
+exec > >(tee $log) # Requires fdescfs mounted to /dev/fd on FreeBSD.
 exec 2>&1
 
 #### Set paths and environment.
@@ -351,7 +354,8 @@ if [ "${perform_clone}" == "1" ]; then
             repo=`echo $line | cut -d ' ' -f 1`
             commits=`echo $line | cut -d ' ' -f 2-`
             echo "Cherry-picking $commits in $repo"
-            ( cd ${src}/$repo && git cherry-pick $commits )
+            ( cd ${src}/$repo \
+              && git cherry-pick --strategy=recursive -X theirs $commits )
         fi
     done
 
@@ -367,7 +371,7 @@ fi
 if [ "$OS" == "Darwin" ]; then
     CMAKE_stage1="-DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++"
 
-elif [ "$OS" == "Linux" ]; then
+elif [ "$OS" == "Linux" ] || [ "$OS" == "FreeBSD" ]; then
     CMAKE_stage1="-DLIBCXX_LIBCXXABI_WHOLE_ARCHIVE=on -DLIBCXXABI_ENABLE_SHARED=off -DBUILD_SHARED_LIBS=on"
     CMAKE_stage2=$CMAKE_stage1
     CMAKE_stage3=$CMAKE_stage1
@@ -376,7 +380,7 @@ elif [ "$OS" == "Linux" ]; then
     default_includes=`add_include_path sys/cdefs.h /usr/include`
 
 else
-    echo "OS ${OS} not supported"
+    echo "OS $OS not supported"
     exit 1
 fi
 
@@ -403,11 +407,9 @@ if [ "${have_clang}" == "1" ]; then
 else
     CC_stage1=$prefix/bin/clang
     CXX_stage1=$prefix/bin/clang++
-    CMAKE_stage1="${CMAKE_stage1}"
 fi
 
 CXXFLAGS_stage1=""
-CMAKE_stage1="${CMAKE_stage1}"
 BUILD_TYPE_stage1=${buildtype}
 
 # Stage 2 options. Compile against our own libraries.

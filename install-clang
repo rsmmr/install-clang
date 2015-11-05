@@ -456,7 +456,7 @@ for stage in 0 1 2; do
 
     if [ "$?" != "0" ] ; then
         echo ===
-        echo === Faild building LLVM/clang at stage ${stage}
+        echo === Failed building LLVM/clang at stage ${stage}
         echo ===
         exit 1
     fi

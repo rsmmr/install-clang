@@ -1,50 +1,59 @@
-From d69bb4b646428fb4b177cd61e467f975d77277da Mon Sep 17 00:00:00 2001
+From 894e08c57059f94b736d1fed1be331dfe0a00b6c Mon Sep 17 00:00:00 2001
 From: Robin Sommer <robin@icir.org>
-Date: Sun, 15 Jun 2014 19:57:19 -0700
-Subject: Adapting linker arguments.
+Date: Sun, 3 Jun 2018 03:10:55 +0000
+Subject: [PATCH] Adapting linker arguments.
 
- - Adding -L<prefix>/lib to default linker arguments.
- - On Linux and FreeBSD, and -rpath.
- - Fix FreeBSD builtin library search paths.
+- Adding -L<prefix>/lib to default linker arguments.
+- On Linux and FreeBSD, add -rpath.
+- Fix FreeBSD builtin library search paths.
 ---
- lib/Driver/ToolChains.cpp | 3 +++
- lib/Driver/Tools.cpp      | 9 +++++++++
- 2 files changed, 12 insertions(+)
+ lib/Driver/ToolChains/CommonArgs.cpp | 9 +++++++++
+ lib/Driver/ToolChains/FreeBSD.cpp    | 5 +++++
+ 2 files changed, 14 insertions(+)
 
-diff --git a/lib/Driver/ToolChains.cpp b/lib/Driver/ToolChains.cpp
-index 2309b2d..db59c01 100644
---- a/lib/Driver/ToolChains.cpp
-+++ b/lib/Driver/ToolChains.cpp
-@@ -2524,6 +2524,9 @@ void Bitrig::AddCXXStdlibLibArgs(const ArgList &Args,
- 
- FreeBSD::FreeBSD(const Driver &D, const llvm::Triple& Triple, const ArgList &Args)
-   : Generic_ELF(D, Triple, Args) {
-+  // Look in the prefix before going into /usr/lib. Otherwise we'll wind up
-+  // with the wrong libc++.
-+  getFilePaths().push_back(getDriver().Dir + "/../lib");
- 
-   // When targeting 32-bit platforms, look for '/usr/lib32/crt1.o' and fall
-   // back to '/usr/lib' if it doesn't exist.
-diff --git a/lib/Driver/Tools.cpp b/lib/Driver/Tools.cpp
-index 9a5b361..32228fd 100644
---- a/lib/Driver/Tools.cpp
-+++ b/lib/Driver/Tools.cpp
-@@ -214,6 +214,15 @@ static void AddLinkerInputs(const ToolChain &TC,
-   //                and only supported on native toolchains.
-   if (!TC.isCrossCompiling())
+diff --git a/lib/Driver/ToolChains/CommonArgs.cpp b/lib/Driver/ToolChains/CommonArgs.cpp
+index f26880123d..3ad3a29093 100644
+--- a/lib/Driver/ToolChains/CommonArgs.cpp
++++ b/lib/Driver/ToolChains/CommonArgs.cpp
+@@ -184,6 +184,15 @@ void tools::AddLinkerInputs(const ToolChain &TC, const InputInfoList &Inputs,
+   if (!TC.isCrossCompiling()) {
      addDirectoryList(Args, CmdArgs, "-L", "LIBRARY_PATH");
+   }
 +
 +  if (!TC.isCrossCompiling()) {
-+    CmdArgs.push_back(Args.MakeArgString("-L" + D.InstalledDir + "/../lib"));
++    std::string lib_dir = llvm::sys::path::parent_path(D.InstalledDir).str() + "/lib";
++    addDirectoryList(Args, CmdArgs, "-L", lib_dir.c_str());
 +
 +    auto os = TC.getTriple().getOS();
 +    if (os == llvm::Triple::Linux || os == llvm::Triple::FreeBSD)
-+      CmdArgs.push_back(Args.MakeArgString("-rpath=" + D.InstalledDir + "/../lib"));
++      CmdArgs.push_back(Args.MakeArgString("-rpath=" + lib_dir));
 +  }
-+
  }
  
- /// \brief Determine whether Objective-C automated reference counting is
+ void tools::AddTargetFeature(const ArgList &Args,
+diff --git a/lib/Driver/ToolChains/FreeBSD.cpp b/lib/Driver/ToolChains/FreeBSD.cpp
+index dd0334b9c2..3e501ff403 100644
+--- a/lib/Driver/ToolChains/FreeBSD.cpp
++++ b/lib/Driver/ToolChains/FreeBSD.cpp
+@@ -17,6 +17,7 @@
+ #include "clang/Driver/Options.h"
+ #include "clang/Driver/SanitizerArgs.h"
+ #include "llvm/Option/ArgList.h"
++#include "llvm/Support/Path.h"
+ 
+ using namespace clang::driver;
+ using namespace clang::driver::tools;
+@@ -313,6 +314,10 @@ void freebsd::Linker::ConstructJob(Compilation &C, const JobAction &JA,
+ FreeBSD::FreeBSD(const Driver &D, const llvm::Triple &Triple,
+                  const ArgList &Args)
+     : Generic_ELF(D, Triple, Args) {
++  // Look in the prefix before going into /usr/lib. Otherwise we'll wind up
++  // with the wrong libc++.
++  std::string lib_dir = llvm::sys::path::parent_path(getDriver().Dir).str() + "/lib";
++  getFilePaths().push_back(lib_dir);
+ 
+   // When targeting 32-bit platforms, look for '/usr/lib32/crt1.o' and fall
+   // back to '/usr/lib' if it doesn't exist.
 -- 
-2.1.2
+2.13.6
 

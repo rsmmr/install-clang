@@ -5,5 +5,5 @@ if [ $# != 1 ]; then
     exit 1
 fi
 
-$1/bin/clang++ --std=c++11 --stdlib=libc++ test.cc -o a.out && ./a.out
+$1/bin/clang++ --std=c++17 --stdlib=libc++ test.cc -o a.out -lc++experimental  && ./a.out
 #rm -f a.out

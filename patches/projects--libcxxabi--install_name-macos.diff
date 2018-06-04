@@ -1,0 +1,46 @@
+From a8081f46b2ffb89720f75529b018af83da020c2c Mon Sep 17 00:00:00 2001
+From: Robin Sommer <robin@icir.org>
+Date: Sun, 3 Jun 2018 03:51:17 +0000
+Subject: [PATCH] Adapting library's install_name on macOS to installation
+ path.
+
+---
+ src/CMakeLists.txt | 10 +++++++---
+ 1 file changed, 7 insertions(+), 3 deletions(-)
+
+diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+index 240f6d0..d1be244 100644
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -87,13 +87,15 @@ if ( APPLE )
+     list(APPEND LIBCXXABI_SHARED_LINK_FLAGS
+       "-compatibility_version 1"
+       "-current_version 1"
+-      "-install_name /usr/lib/libc++abi.1.dylib")
++      "-install_name ${CMAKE_INSTALL_PREFIX}/lib/libc++abi.1.dylib"
++      "-nodefaultlibs")
+     list(APPEND LIBCXXABI_LINK_FLAGS
+         "/usr/lib/libSystem.B.dylib")
+   else()
+     list(APPEND LIBCXXABI_SHARED_LINK_FLAGS
+       "-compatibility_version 1"
+-      "-install_name /usr/lib/libc++abi.1.dylib")
++      "-install_name ${CMAKE_INSTALL_PREFIX}/lib/libc++abi.1.dylib"
++      "-nodefaultlibs")
+   endif()
+ endif()
+ 
+@@ -145,7 +147,9 @@ if (LIBCXXABI_ENABLE_SHARED)
+                           SOVERSION
+                             "1"
+                           VERSION
+-                            "1.0")
++                            "1.0"
++                          INSTALL_NAME_DIR
++                            "${CMAKE_INSTALL_PREFIX}/lib")
+   list(APPEND LIBCXXABI_TARGETS "cxxabi_shared")
+ endif()
+ 
+-- 
+2.13.6
+

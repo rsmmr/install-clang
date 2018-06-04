@@ -1,0 +1,64 @@
+From c8441017c224bd8d0ebd737c091204d802ee2fa7 Mon Sep 17 00:00:00 2001
+From: Robin Sommer <robin@icir.org>
+Date: Sun, 3 Jun 2018 03:54:32 +0000
+Subject: [PATCH] Adapting library's install_name on macOS to installation
+ path.
+
+---
+ lib/CMakeLists.txt | 16 ++++++++++------
+ 1 file changed, 10 insertions(+), 6 deletions(-)
+
+diff --git a/lib/CMakeLists.txt b/lib/CMakeLists.txt
+index aa5ebf156..b9a6f141a 100644
+--- a/lib/CMakeLists.txt
++++ b/lib/CMakeLists.txt
+@@ -153,10 +153,11 @@ if (LIBCXX_OSX_REEXPORT_SYSTEM_ABI_LIBRARY)
+     add_link_flags(
+       "-compatibility_version 1"
+       "-current_version 1"
+-      "-install_name /usr/lib/libc++.1.dylib"
+-      "-Wl,-reexport_library,/usr/lib/libc++abi.dylib"
++      "-install_name ${CMAKE_INSTALL_PREFIX}/lib/libc++.1.dylib"
++      "-Wl,-reexport_library,${CMAKE_INSTALL_PREFIX}/lib/libc++abi.dylib"
+       "-Wl,-unexported_symbols_list,${CMAKE_CURRENT_SOURCE_DIR}/libc++unexp.exp"
+-      "/usr/lib/libSystem.B.dylib")
++      "/usr/lib/libSystem.B.dylib"
++      "-nodefaultlibs")
+   else()
+ 	  if (DEFINED CMAKE_OSX_SYSROOT AND NOT CMAKE_OSX_SYSROOT STREQUAL "")
+       list(FIND CMAKE_OSX_ARCHITECTURES "armv7" OSX_HAS_ARMV7)
+@@ -169,18 +170,20 @@ if (LIBCXX_OSX_REEXPORT_SYSTEM_ABI_LIBRARY)
+           "-Wl,-reexport_library,${CMAKE_OSX_SYSROOT}/usr/lib/libc++abi.dylib")
+       endif()
+     else()
+-      set(OSX_RE_EXPORT_LINE "/usr/lib/libc++abi.dylib -Wl,-reexported_symbols_list,${CMAKE_CURRENT_SOURCE_DIR}/libc++abi${LIBCXX_LIBCPPABI_VERSION}.exp")
++      get_property(abiloc TARGET cxxabi PROPERTY LOCATION)
++      set(OSX_RE_EXPORT_LINE "-Wl,-reexport_library,${abiloc}")
+       if (NOT LIBCXX_ENABLE_NEW_DELETE_DEFINITIONS)
+         add_link_flags("/usr/lib/libc++abi.dylib -Wl,-reexported_symbols_list,${CMAKE_CURRENT_SOURCE_DIR}/libc++abi-new-delete.exp")
+       endif()
+     endif()
+     add_link_flags(
+       "-compatibility_version 1"
+-      "-install_name /usr/lib/libc++.1.dylib"
++      "-install_name ${CMAKE_INSTALL_PREFIX}/lib/libc++.1.dylib"
+       "-Wl,-unexported_symbols_list,${CMAKE_CURRENT_SOURCE_DIR}/libc++unexp.exp"
+       "${OSX_RE_EXPORT_LINE}"
+       "-Wl,-force_symbols_not_weak_list,${CMAKE_CURRENT_SOURCE_DIR}/notweak.exp"
+-      "-Wl,-force_symbols_weak_list,${CMAKE_CURRENT_SOURCE_DIR}/weak.exp")
++      "-Wl,-force_symbols_weak_list,${CMAKE_CURRENT_SOURCE_DIR}/weak.exp"
++      "-nodefaultlibs")
+   endif()
+ endif()
+ 
+@@ -229,6 +232,7 @@ if (LIBCXX_ENABLE_SHARED)
+       OUTPUT_NAME   "c++"
+       VERSION       "${LIBCXX_ABI_VERSION}.0"
+       SOVERSION     "${LIBCXX_ABI_VERSION}"
++      INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib"
+   )
+   list(APPEND LIBCXX_TARGETS "cxx_shared")
+   if(WIN32 AND NOT MINGW AND NOT "${CMAKE_HOST_SYSTEM_NAME}" STREQUAL "Windows")
+-- 
+2.13.6
+

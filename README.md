@@ -2,16 +2,17 @@ install-clang
 =============
 
 This script installs self-contained standalone versions of [clang][1],
-[LLVM][2], [libc++][3], and [compiler-rt][4] on Darwin, FreeBSD, and Linux,
-including linking clang and LLVM themselves against libc++ as well. The
-script keeps all of the installation within a given target prefix (e.g.,
-`/opt/llvm`), and hence separate from any already installed compilers,
-libraries, and include files. In particular, you can later deinstall
-everything easily by just deleting, e.g., `/opt/llvm`. Furthermore, as
-long as the prefix path is writable, the installation doesn't need root
+[LLVM][2], [libc++][3], [compiler-rt][4], [libc++abi][5], [lldb][6],
+and [lld][7], on macOS and Linux, including linking clang and LLVM
+against libc++ themselves as well. The script keeps all of the
+installation within a given target prefix (e.g., `/opt/llvm`), and
+hence separate from any already installed compilers, libraries, and
+include files. In particular, you can later uninstall everything
+easily by just deleting, e.g., `/opt/llvm`. Furthermore, as long as
+the prefix path is writable, the installation doesn't need root
 privileges.
 
-If you have used older version of the script before, see News below
+If you have used older version of this script before, see News below
 for changes.
 
 Usage
@@ -47,12 +48,12 @@ ready to use the new binaries:
     > clang++ --std=c++11 --stdlib=libc++ test.cc -o a.out && ./a.out
     Hello, Clang!
 
-By default, install-clang currently installs the 3.5 release branches
+By default, install-clang currently installs the 6.0 release branches
 of the relevant llvm.org projects. Adding `-m` on the command line
 instructs the script to use the current git master versions instead.
 The script downloads all the sources from the corresponding git
-repositories and compiles the pieces as needed. Other OSs than Darwin,
-FreeBSD, and Linux are not currently supported.
+repositories and compiles the pieces as needed. Other OSs than macOS,
+and Linux are not currently supported.
 
 The script also has an update option `-u` that allows for catching up
 with upstream repository changes without doing the complete
@@ -91,6 +92,26 @@ https://registry.hub.docker.com/u/rsmmr/clang.
 News
 ----
 
+Version for LLVM/Clang 6.0
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The install-clang script for LLVM 6.0 comes with these changes
+compared to the 3.5 version:
+
+* The default build type is now `Release`. It used to be
+  `RelWithDebInfo`.
+
+* lldb and lld seem to built correctly on both Linux and Darwin now
+  and both are enabled by default.
+
+* FreeBSD support is untested and hence disabled for now. Will be reactivated
+  once confirmed that it's working.
+
+* On macOS, we no longer build for i386.
+
+Version for LLVM/Clang 3.5
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 The install-clang script for LLVM 3.5 comes with a few changes
 compared to earlier version:
 
@@ -122,3 +143,5 @@ compared to earlier version:
 [3]: http://libcxx.llvm.org
 [4]: http://compiler-rt.llvm.org
 [5]: http://libcxxabi.llvm.org
+[6]: http://lldb.llvm.org
+[7]: http://lld.llvm.org

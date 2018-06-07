@@ -1,0 +1,93 @@
+From 975a5fabe1f0560d50c4607d43aa8ea1dfac4ca8 Mon Sep 17 00:00:00 2001
+From: Vedant Kumar <vsk@apple.com>
+Date: Tue, 13 Feb 2018 23:05:46 +0000
+Subject: [PATCH 1/2] [cmake] Darwin: Copy in the system debugserver if needed
+
+This makes the built debugger functional on Darwin when compiling
+without code signing (as documented in docs/code-signing.txt).
+
+git-svn-id: https://llvm.org/svn/llvm-project/lldb/trunk@325068 91177308-0d34-0410-b5e6-96231b3b80d8
+---
+ CMakeLists.txt                             | 16 ++++++++++++++++
+ test/CMakeLists.txt                        |  2 +-
+ tools/debugserver/source/CMakeLists.txt    | 10 +++++++++-
+ unittests/tools/lldb-server/CMakeLists.txt |  2 +-
+ 4 files changed, 27 insertions(+), 3 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index c6b082e10..057dc7fe0 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -56,6 +56,22 @@ if (NOT LLDB_DISABLE_PYTHON)
+ 
+   add_subdirectory(scripts)
+ endif ()
++
++if(CMAKE_HOST_APPLE)
++  if(LLDB_CODESIGN_IDENTITY)
++    set(DEBUGSERVER_PATH $<TARGET_FILE:debugserver>)
++  else()
++    execute_process(
++      COMMAND xcode-select -p
++      OUTPUT_VARIABLE XCODE_DEV_DIR)
++    string(STRIP ${XCODE_DEV_DIR} XCODE_DEV_DIR)
++    set(DEBUGSERVER_PATH
++      "${XCODE_DEV_DIR}/../SharedFrameworks/LLDB.framework/Resources/debugserver")
++    set(SKIP_DEBUGSERVER True)
++  endif()
++  message(STATUS "Path to the lldb debugserver: ${DEBUGSERVER_PATH}")
++endif()
++
+ add_subdirectory(source)
+ add_subdirectory(tools)
+ 
+diff --git a/test/CMakeLists.txt b/test/CMakeLists.txt
+index 9826de38c..9915dee2c 100644
+--- a/test/CMakeLists.txt
++++ b/test/CMakeLists.txt
+@@ -95,7 +95,7 @@ if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows|Darwin")
+ endif()
+ 
+ if(CMAKE_HOST_APPLE)
+-  list(APPEND LLDB_TEST_COMMON_ARGS --server $<TARGET_FILE:debugserver>)
++  list(APPEND LLDB_TEST_COMMON_ARGS --server ${DEBUGSERVER_PATH})
+ endif()
+ 
+ set(LLDB_DOTEST_ARGS ${LLDB_TEST_COMMON_ARGS};${LLDB_TEST_USER_ARGS})
+diff --git a/tools/debugserver/source/CMakeLists.txt b/tools/debugserver/source/CMakeLists.txt
+index d99880cd9..e70e90923 100644
+--- a/tools/debugserver/source/CMakeLists.txt
++++ b/tools/debugserver/source/CMakeLists.txt
+@@ -195,7 +195,15 @@ if("${LLDB_CODESIGN_IDENTITY}" STREQUAL "lldb_codesign")
+ endif()
+ option(LLDB_USE_ENTITLEMENTS "Use entitlements when codesigning (Defaults Off when using lldb_codesign identity, otherwise On)" ${LLDB_USE_ENTITLEMENTS_Default})
+ 
+-if (NOT ("${LLDB_CODESIGN_IDENTITY}" STREQUAL ""))
++if ("${LLDB_CODESIGN_IDENTITY}" STREQUAL "")
++  if (CMAKE_HOST_APPLE)
++    # If we haven't built a signed debugserver, copy the one from the system.
++    add_custom_target(debugserver
++      COMMAND ${CMAKE_COMMAND} -E copy_if_different ${DEBUGSERVER_PATH} ${CMAKE_BINARY_DIR}/bin
++      VERBATIM
++      COMMENT "Copying the system debugserver to LLDB's binaries directory.")
++  endif()
++else()
+   if(LLDB_USE_ENTITLEMENTS)
+     set(entitlements_flags --entitlements ${entitlements_xml})
+   endif()
+diff --git a/unittests/tools/lldb-server/CMakeLists.txt b/unittests/tools/lldb-server/CMakeLists.txt
+index 14df6e64b..dcbd9bed5 100644
+--- a/unittests/tools/lldb-server/CMakeLists.txt
++++ b/unittests/tools/lldb-server/CMakeLists.txt
+@@ -13,7 +13,7 @@ add_lldb_test_executable(thread_inferior inferior/thread_inferior.cpp)
+ add_lldb_test_executable(environment_check inferior/environment_check.cpp)
+ 
+ if (CMAKE_SYSTEM_NAME MATCHES "Darwin")
+-  add_definitions(-DLLDB_SERVER="$<TARGET_FILE:debugserver>" -DLLDB_SERVER_IS_DEBUGSERVER=1)
++  add_definitions(-DLLDB_SERVER="${DEBUGSERVER_PATH}" -DLLDB_SERVER_IS_DEBUGSERVER=1)
+ else()
+   add_definitions(-DLLDB_SERVER="$<TARGET_FILE:lldb-server>" -DLLDB_SERVER_IS_DEBUGSERVER=0)
+ endif()
+-- 
+2.17.0
+

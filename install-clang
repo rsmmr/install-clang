@@ -3,8 +3,6 @@
 OS=`uname`
 if [ "$OS" == "Linux" ]; then
     triple=$(gcc -v 2>&1 | grep "^Target:" | cut -d ' ' -f 2)
-    soext="so"
-    somask="so.%s"
     addl_ldflags=""
     addl_cmake="-DLLVM_DEFAULT_TARGET_TRIPLE=${triple}"
 
@@ -13,20 +11,13 @@ elif [ "$OS" == "FreeBSD" ]; then
     exit 1
 
     triple=""
-    soext="so"
-    somask="so.%s"
     addl_ldflags=""
     addl_cmake=""
 
 elif [ "$OS" == "Darwin" ]; then
-    echo ${OS} not supported currently.
-    exit 1
-
-    triple="-apple-"
-    soext="dylib"
-    somask="%d.dylib"
+    triple=""
     addl_ldflags=""
-    addl_cmake="-DCMAKE_OSX_ARCHITECTURES=x86_64;i386"
+    addl_cmake="-DLLDB_CODESIGN_IDENTITY="
 
 else
     echo "OS $OS not supported by this script."

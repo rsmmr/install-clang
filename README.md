@@ -59,15 +59,15 @@ The script also has an update option `-u` that allows for catching up
 with upstream repository changes without doing the complete
 compile/install-from-scratch cycle again. Note, however, that unless
 coupled with `-m`, this flag has no immediate effect since the git
-versions to use are hardcoded to the LLVM/clang release versions.
+versions to use are hardcoded to the Clang/LLVM release versions.
 
-Doing a self-contained clang/LLVM installation is a bit more messy
+Doing a self-contained Clang installation is a bit more messy
 than one would hope because the projects make assumptions about
 specific system-wide installation paths to use. The install-clang
 script captures some trial-and-error I (and others) went through to
-get an independent setup working. It compiles clang/LLVM up to three
+get an independent setup working. It compiles Clang up to three
 times, bootstrapping things with the system compiler as it goes. It
-also patches some of the LLVM projects to incorporate the installation
+also patches some of the Clang/LLVM projects to incorporate the installation
 prefix into configuration and search paths, and also fixes/tweaks a few
 other things as well.
 
@@ -75,16 +75,16 @@ Docker
 ------
 
 install-clang comes with a Dockerfile to build a Docker image, based
-on Ubuntu, with clang/LLVM then in /opt/llvm:
+on Ubuntu, with Clang then in /opt/llvm:
 
     # make docker-build && make docker-run
     [... get a beer ...]
     root@f39b941f177c:/# clang --version
-    clang version 3.5.0
-    Target: x86_64-unknown-linux-gnu
+    clang version 6.0.1
+    Target: x86_64--linux-gnu
     Thread model: posix
     root@f39b941f177c:/# which clang
-    /opt/llvm/bin/clang
+    /opt/clang/bin/clang
 
 A prebuilt image is available at
 https://registry.hub.docker.com/u/rsmmr/clang.
@@ -92,10 +92,10 @@ https://registry.hub.docker.com/u/rsmmr/clang.
 News
 ----
 
-Version for LLVM/Clang 6.0
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+Version for Clang 6.0
+~~~~~~~~~~~~~~~~~~~~~
 
-The install-clang script for LLVM 6.0 comes with these changes
+The install-clang script for Clang 6.0 comes with these changes
 compared to the 3.5 version:
 
 * The default build type is now `Release`. It used to be
@@ -109,10 +109,13 @@ compared to the 3.5 version:
 
 * On macOS, we no longer build for i386.
 
-Version for LLVM/Clang 3.5
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+* The Docker image is now based on Ubuntu Xenial and puts everything
+  into /opt/clang.
 
-The install-clang script for LLVM 3.5 comes with a few changes
+Version for Clang 3.5
+~~~~~~~~~~~~~~~~~~~~~
+
+The install-clang script for Clang 3.5 comes with a few changes
 compared to earlier version:
 
 * The script now supports FreeBSD as well. (Contributed by Matthias
@@ -135,7 +138,7 @@ compared to earlier version:
   clang; libc++abi needs clang that for its initial compilation
   already.
 
-* There's now a Dockerfile to build an image with clang/LLVM in
+* There's now a Dockerfile to build an image with Clang/LLVM in
   /opt/llvm.
 
 [1]: http://clang.llvm.org

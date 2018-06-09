@@ -226,18 +226,27 @@ function st
 function add_include_path
 {
     include=$1
-    search_patch=$2
+    shift
+    search_paths=$@
+    new_includes=${default_includes}
 
-    path=`find "${search_patch}" | grep "${include}$" | awk '{print length, $0;}' | sort -n | head -1 | awk '{printf("%s", $2)}'`
+    for p in ${search_paths}; do
+        test -d ${p} || continue
 
-    if [ "$path" != "" ]; then
-        path=`echo -n ${path} | sed "s#${include}##g"`
-        if [ "${default_includes}" = "" ]; then
-            echo -n "${path}"
-        else
-            echo -n "${default_includes}:${path}"
+        path=`find "${p}" | grep "${include}$" | awk '{print length, $0;}' | sort -n | head -1 | awk '{printf("%s", $2)}'`
+
+        if [ -n "${path}" ]; then
+            path=`echo -n ${path} | sed "s#/${include}##g"`
+            if [ -n "${new_includes}" ] && ! $(echo "${new_includes}" | tr ":" "\n" | grep -qx "${path}"); then
+                new_includes="${new_includes}:${path}"
+            else
+                new_includes="${new_includes}"
+            fi
+            break
         fi
-    fi
+    done
+
+    echo  -n ${new_includes}
 }
 
 function apply_patch
@@ -368,8 +377,8 @@ if [ "$OS" == "Darwin" ]; then
 elif [ "$OS" == "Linux" ] || [ "$OS" == "FreeBSD" ]; then
     CMAKE_stage1="-DLIBCXX_ENABLE_STATIC_ABI_LIBRARY=on -DLIBCXX_ENABLE_ABI_LINKER_SCRIPT=off -DLIBCXXABI_ENABLE_SHARED=off -DBUILD_SHARED_LIBS=on"
     CMAKE_stage2=$CMAKE_stage1
-    default_includes=`add_include_path features.h /usr/include`
-    default_includes=`add_include_path sys/cdefs.h /usr/include`
+    default_includes=$(add_include_path features.h /usr/include)
+    default_includes=$(add_include_path sys/cdefs.h /usr/include/${triple} /usr/include)
 else
     echo "OS $OS not supported"
     exit 1

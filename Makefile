@@ -1,5 +1,5 @@
 
-IMAGE="rsmmr/clang:3.5"
+IMAGE="rsmmr/clang:6.0"
 
 all:
 

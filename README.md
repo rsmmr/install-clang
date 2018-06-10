@@ -86,8 +86,7 @@ on Ubuntu, with Clang then in /opt/llvm:
     root@f39b941f177c:/# which clang
     /opt/clang/bin/clang
 
-A prebuilt image is available at
-https://registry.hub.docker.com/u/rsmmr/clang.
+A prebuilt image is available at https://hub.docker.com/r/rsmmr/clang/ .
 
 News
 ----

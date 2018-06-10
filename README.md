@@ -92,8 +92,7 @@ https://registry.hub.docker.com/u/rsmmr/clang.
 News
 ----
 
-Version for Clang 6.0
-~~~~~~~~~~~~~~~~~~~~~
+### Version for Clang 6.0
 
 The install-clang script for Clang 6.0 comes with these changes
 compared to the 3.5 version:
@@ -110,10 +109,9 @@ compared to the 3.5 version:
 * On macOS, we no longer build for i386.
 
 * The Docker image is now based on Ubuntu Xenial and puts everything
-  into /opt/clang.
+  into `/opt/clang`.
 
-Version for Clang 3.5
-~~~~~~~~~~~~~~~~~~~~~
+### Version for Clang 3.5
 
 The install-clang script for Clang 3.5 comes with a few changes
 compared to earlier version:

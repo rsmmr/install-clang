@@ -1,4 +1,5 @@
 
+REPO="rsmmr/clang"
 IMAGE="rsmmr/clang:6.0"
 
 all:
@@ -14,3 +15,5 @@ docker-run:
 
 docker-push:
 	docker push ${IMAGE}
+	docker tag ${IMAGE} ${REPO}:latest
+	docker push ${REPO}:latest

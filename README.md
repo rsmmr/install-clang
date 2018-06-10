@@ -1,7 +1,7 @@
 install-clang
 =============
 
-This script installs self-contained standalone versions of [clang][1],
+This script installs self-contained standalone 6.0 versions of [clang][1],
 [LLVM][2], [libc++][3], [compiler-rt][4], [libc++abi][5], [lldb][6],
 and [lld][7], on macOS and Linux, including linking clang and LLVM
 against libc++ themselves as well. The script keeps all of the

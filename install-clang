@@ -17,7 +17,7 @@ elif [ "$OS" == "FreeBSD" ]; then
 elif [ "$OS" == "Darwin" ]; then
     triple=""
     addl_ldflags=""
-    addl_cmake="-DLLDB_CODESIGN_IDENTITY="
+    addl_cmake="-DCMAKE_OSX_ARCHITECTURES=x86_64 -DDARWIN_iossim_ARCHS=x86_64 -DLLDB_CODESIGN_IDENTITY="
 
 else
     echo "OS $OS not supported by this script."

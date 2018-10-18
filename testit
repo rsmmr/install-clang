@@ -5,5 +5,11 @@ if [ $# != 1 ]; then
     exit 1
 fi
 
-$1/bin/clang++ --std=c++17 --stdlib=libc++ test.cc -o a.out -lc++experimental  && ./a.out
+OS="$(uname)"
+
+if [ "$OS" == "Darwin" ]; then
+  sysroot="-isysroot $(xcodebuild -version -sdk macosx Path)"
+fi
+
+$1/bin/clang++ $sysroot --std=c++17 --stdlib=libc++ test.cc -o a.out -lc++experimental  && ./a.out
 #rm -f a.out

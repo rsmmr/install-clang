@@ -17,7 +17,7 @@ elif [ "$OS" == "FreeBSD" ]; then
 elif [ "$OS" == "Darwin" ]; then
     triple=""
     addl_ldflags=""
-    addl_cmake="-DCMAKE_OSX_ARCHITECTURES=x86_64 -DDARWIN_iossim_ARCHS=x86_64 -DLLDB_CODESIGN_IDENTITY="
+    addl_cmake="-DCMAKE_OSX_ARCHITECTURES=x86_64 -DDARWIN_iossim_ARCHS=x86_64 -DLLDB_CODESIGN_IDENTITY=- -DLLDB_USE_SYSTEM_DEBUGSERVER=ON"
 
 else
     echo "OS $OS not supported by this script."
@@ -54,10 +54,10 @@ perform_stage1=1           # If 0, skip the 1st bootstrap stage (for testing onl
 perform_stage2=1           # If 0, skip the 2nd stage compiling LLVM/clang against libc++ (for testing only).
 perform_lldb_build=1       # If 1, attempt to build LLDB.
 perform_lld_build=1        # If 1, attempt to build LLDB.
-perform_extra_build=1      # If 1, attempt to build clang-extra tools.
+perform_extra_build=0      # If 1, attempt to build clang-extra tools.  -- TODO: clangd doesn't compile
 perform_cleanup=0          # If 1, delete all source and build directories.
 assertions=off             # If "on", enable LLVM assertions.
-parallelism=1              # The value X to pass to make -j X to build in parallel.
+parallelism=4              # The value X to pass to make -j X to build in parallel.
 buildtype=Release          # LLVM/clang build type.
 mode=install               # Install from scratch.
 targets=host               # LLVM_TARGETS_TO_BUILD ("all" builds them all).
@@ -148,14 +148,14 @@ shift
 
 if [ "${use_master}" != "1" ]; then
     # git version to checkout.
-    version_llvm=release_60
-    version_clang=release_60
-    version_libcxx=release_60
-    version_compilerrt=release_60
-    version_libcxxabi=release_60
-    version_lldb=release_60
-    version_lld=release_60
-    version_extra=release_60
+    version_llvm=release_80
+    version_clang=release_80
+    version_libcxx=release_80
+    version_compilerrt=release_80
+    version_libcxxabi=release_80
+    version_lldb=release_80
+    version_lld=release_80
+    version_extra=release_80
 
     cherrypick=""
 else
@@ -195,10 +195,6 @@ exec 2>&1
 
 #### Set paths and environment.
 
-unset CFLAGS
-unset CXXFLAGS
-unset CPPFLAGS
-unset LDFLAGS
 unset LD_LIBRARY_PATH
 unset DYLD_LIBRARY_PATH
 
@@ -267,6 +263,7 @@ function apply_patch
         cd $dir
     fi
 
+    echo === Applying ${patch}
     cat $patch | git am -3
 }
 
@@ -440,9 +437,9 @@ for stage in 0 1 2; do
        cd build-stage${stage} && \
        CC=`st CC` \
        CXX=`st CXX` \
-       CFLAGS="`st CFLAGS`" \
-       CXXFLAGS="`st CXXFLAGS`" \
-       LDFLAGS="${addl_ldflags}" \
+       CFLAGS="`st CFLAGS` ${CFLAGS}" \
+       CXXFLAGS="`st CXXFLAGS` ${CXXFLAGS}" \
+       LDFLAGS="${addl_ldflags} ${LDFLAGS}" \
        cmake -DCMAKE_BUILD_TYPE=`st BUILD_TYPE` \
              -DLLVM_REQUIRES_RTTI=1 \
              -DCMAKE_INSTALL_PREFIX=${prefix} \

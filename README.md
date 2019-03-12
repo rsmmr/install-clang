@@ -1,7 +1,7 @@
 install-clang
 =============
 
-This script installs self-contained standalone 6.0 versions of [clang][1],
+This script installs self-contained standalone 8.0 versions of [clang][1],
 [LLVM][2], [libc++][3], [compiler-rt][4], [libc++abi][5], [lldb][6],
 and [lld][7], on macOS and Linux, including linking clang and LLVM
 against libc++ themselves as well. The script keeps all of the
@@ -48,7 +48,7 @@ ready to use the new binaries:
     > clang++ --std=c++11 --stdlib=libc++ test.cc -o a.out && ./a.out
     Hello, Clang!
 
-By default, install-clang currently installs the 6.0 release branches
+By default, install-clang currently installs the 8.0 release branches
 of the relevant llvm.org projects. Adding `-m` on the command line
 instructs the script to use the current git master versions instead.
 The script downloads all the sources from the corresponding git
@@ -80,7 +80,7 @@ on Ubuntu, with Clang then in /opt/llvm:
     # make docker-build && make docker-run
     [... get a beer ...]
     root@f39b941f177c:/# clang --version
-    clang version 6.0.1
+    clang version 8.0.0
     Target: x86_64--linux-gnu
     Thread model: posix
     root@f39b941f177c:/# which clang
@@ -90,6 +90,24 @@ A prebuilt image is available at https://hub.docker.com/r/rsmmr/clang/ .
 
 News
 ----
+
+### Version for Clang 8.0
+
+The install-clang script for Clang 8.0 comes with these changes
+compared to the 6.0 version:
+
+* TODOs:
+    - clang-extra build remains disabled, as clangd doesn't compile.
+    - lldb doesn't work on macOS yet, can't attach to processes,
+      presumably due to lack of code signing.
+
+* We now honor preset environment variables CFLAGS, CXXFLAGS, and
+  LDFLAGS to find dependencies.
+
+* Removed patches that are no longer necessary.
+
+* Removed any customziation for FreeBSD; support had been untested in
+  a long time.
 
 ### Version for Clang 6.0
 

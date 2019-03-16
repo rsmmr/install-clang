@@ -1,0 +1,42 @@
+From fee65bf4203562d0d5aadcae622147ddb6979636 Mon Sep 17 00:00:00 2001
+From: Robin Sommer <robin@icir.org>
+Date: Sun, 3 Jun 2018 03:08:40 +0000
+Subject: [PATCH] Fix building with -fPIC.
+
+---
+ cmake/modules/AddLLDB.cmake | 12 +++++-------
+ 1 file changed, 5 insertions(+), 7 deletions(-)
+
+diff --git a/cmake/modules/AddLLDB.cmake b/cmake/modules/AddLLDB.cmake
+index 2fd8b384d..45546c198 100644
+--- a/cmake/modules/AddLLDB.cmake
++++ b/cmake/modules/AddLLDB.cmake
+@@ -34,13 +34,6 @@ function(add_lldb_library name)
+     set(libkind STATIC)
+   endif()
+ 
+-  #PIC not needed on Win
+-  # FIXME: Setting CMAKE_CXX_FLAGS here is a no-op, use target_compile_options
+-  # or omit this logic instead.
+-  if (NOT WIN32)
+-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+-  endif()
+-
+   if (PARAM_OBJECT)
+     add_library(${name} ${libkind} ${srcs})
+   else()
+@@ -81,6 +74,11 @@ function(add_lldb_library name)
+   # Add in any extra C++ compilation flags for this library.
+   target_compile_options(${name} PRIVATE ${PARAM_EXTRA_CXXFLAGS})
+ 
++  #PIC not needed on Win
++  if (NOT WIN32)
++    target_compile_options(${name} PRIVATE "-fPIC")
++  endif()
++
+   set_target_properties(${name} PROPERTIES FOLDER "lldb libraries")
+ endfunction(add_lldb_library)
+ 
+-- 
+2.13.6
+

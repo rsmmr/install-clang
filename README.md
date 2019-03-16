@@ -97,7 +97,6 @@ The install-clang script for Clang 8.0 comes with these changes
 compared to the 6.0 version:
 
 * TODOs:
-    - clang-extra build remains disabled, as clangd doesn't compile.
     - lldb doesn't work on macOS yet, can't attach to processes,
       presumably due to lack of code signing.
 

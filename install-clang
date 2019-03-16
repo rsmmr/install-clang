@@ -255,7 +255,7 @@ function apply_patch
     cd $src
 
     if basename "$patch" | grep -q -- '--'; then
-        dir=`echo $base | awk -v src=$src -F '--' '{printf("%s/%s/%s", src, $1, $2);}'`
+        dir="$src/$(dirname $(echo $base | sed 's#--#/#g'))"
         if [ ! -d "$dir" ]; then
             return
         fi
@@ -263,7 +263,7 @@ function apply_patch
         cd $dir
     fi
 
-    echo === Applying ${patch}
+    echo === Applying ${patch} in $(pwd)
     cat $patch | git am -3
 }
 

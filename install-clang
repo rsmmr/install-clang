@@ -15,10 +15,16 @@ elif [ "$OS" == "FreeBSD" ]; then
     addl_cmake=""
 
 elif [ "$OS" == "Darwin" ]; then
+    if ! which xcodebuild >/dev/null; then
+        echo "xcodebuild not available"
+        exit 1
+    fi
+
+    sysroot=$(xcodebuild -version -sdk macosx Path)
+
     triple=""
     addl_ldflags=""
-    addl_cmake="-DCMAKE_OSX_ARCHITECTURES=x86_64 -DDARWIN_iossim_ARCHS=x86_64 -DLLDB_CODESIGN_IDENTITY=- -DLLDB_USE_SYSTEM_DEBUGSERVER=ON"
-
+    addl_cmake="-DDEFAULT_SYSROOT=${sysroot} -DCMAKE_OSX_ARCHITECTURES=x86_64 -DDARWIN_iossim_ARCHS=x86_64 -DLLDB_CODESIGN_IDENTITY=- -DLLDB_USE_SYSTEM_DEBUGSERVER=ON"
 else
     echo "OS $OS not supported by this script."
     exit 1

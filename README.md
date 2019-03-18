@@ -96,14 +96,11 @@ News
 The install-clang script for Clang 8.0 comes with these changes
 compared to the 6.0 version:
 
-* TODOs:
-    - lldb doesn't work on macOS yet, can't attach to processes,
-      presumably due to lack of code signing.
-
 * We now honor preset environment variables CFLAGS, CXXFLAGS, and
   LDFLAGS to find dependencies.
 
-* Removed patches that are no longer necessary.
+* On macOS, we now set clang's DEFAULT_SYSROOT to the current macOS
+  SDK.
 
 * Removed any customziation for FreeBSD; support had been untested in
   a long time.

@@ -102,6 +102,9 @@ compared to the 6.0 version:
 * On macOS, we now set clang's DEFAULT_SYSROOT to the current macOS
   SDK.
 
+* We apply a custom clang-format patch that adds a couple of custom
+  formatting options.
+
 * Removed any customziation for FreeBSD; support had been untested in
   a long time.
 

@@ -1,4 +1,4 @@
-From e8bd481b778adcdb3815fc433d943a6134d1b074 Mon Sep 17 00:00:00 2001
+From 455a3f43f7a08269c2b839bc17fe9e97ff8318b6 Mon Sep 17 00:00:00 2001
 From: Robin Sommer <robin@icir.org>
 Date: Sun, 10 Mar 2019 11:12:13 -0700
 Subject: [PATCH] Adapting linker arguments.
@@ -10,7 +10,7 @@ Subject: [PATCH] Adapting linker arguments.
  1 file changed, 9 insertions(+)
 
 diff --git a/lib/Driver/ToolChains/CommonArgs.cpp b/lib/Driver/ToolChains/CommonArgs.cpp
-index d7e316befa..6e11e78830 100644
+index d7e316befa..df2b3582d2 100644
 --- a/lib/Driver/ToolChains/CommonArgs.cpp
 +++ b/lib/Driver/ToolChains/CommonArgs.cpp
 @@ -189,6 +189,15 @@ void tools::AddLinkerInputs(const ToolChain &TC, const InputInfoList &Inputs,
@@ -19,7 +19,7 @@ index d7e316befa..6e11e78830 100644
    }
 +
 +  if (!TC.isCrossCompiling()) {
-+    std::string lib_dir = llvm::sys::path::parent_path(D.InstalledDir).str() + "/lib";
++    std::string lib_dir = llvm::sys::path::parent_path(TC.getDriver().Dir).str() + "/lib";
 +    CmdArgs.push_back(Args.MakeArgString("-L" + lib_dir));
 +
 +    auto os = TC.getTriple().getOS();
@@ -30,5 +30,5 @@ index d7e316befa..6e11e78830 100644
  
  void tools::AddTargetFeature(const ArgList &Args,
 -- 
-2.21.0
+2.14.5
 

@@ -96,6 +96,9 @@ News
 The install-clang script for Clang 8.0 comes with these changes
 compared to the 6.0 version:
 
+* Fix computed RPATH when the clang binary has been symlinked from
+  elsehwere (#18).
+
 * We now honor preset environment variables CFLAGS, CXXFLAGS, and
   LDFLAGS to find dependencies.
 

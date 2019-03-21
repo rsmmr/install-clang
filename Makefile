@@ -1,6 +1,6 @@
 
 REPO="rsmmr/clang"
-IMAGE="rsmmr/clang:6.0"
+IMAGE="rsmmr/clang:8.0"
 
 all:
 

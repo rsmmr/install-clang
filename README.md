@@ -91,7 +91,7 @@ A prebuilt image is available at https://hub.docker.com/r/rsmmr/clang/ .
 News
 ----
 
-### Version for Clang 8.0
+### Version for Clang 8.0 (git `master`)
 
 The install-clang script for Clang 8.0 comes with these changes
 compared to the 6.0 version:
@@ -111,7 +111,7 @@ compared to the 6.0 version:
 * Removed any customziation for FreeBSD; support had been untested in
   a long time.
 
-### Version for Clang 6.0
+### Version for Clang 6.0 (git tag `release_60`)
 
 The install-clang script for Clang 6.0 comes with these changes
 compared to the 3.5 version:
@@ -130,7 +130,7 @@ compared to the 3.5 version:
 * The Docker image is now based on Ubuntu Xenial and puts everything
   into `/opt/clang`.
 
-### Version for Clang 3.5
+### Version for Clang 3.5 (git tag `release_35`)
 
 The install-clang script for Clang 3.5 comes with a few changes
 compared to earlier version:

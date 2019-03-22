@@ -1,6 +1,6 @@
-From a8081f46b2ffb89720f75529b018af83da020c2c Mon Sep 17 00:00:00 2001
+From b3ed22f8d142f9363036e5dd621ce9a5e5309e76 Mon Sep 17 00:00:00 2001
 From: Robin Sommer <robin@icir.org>
-Date: Sun, 3 Jun 2018 03:51:17 +0000
+Date: Sun, 10 Mar 2019 11:04:42 -0700
 Subject: [PATCH] Adapting library's install_name on macOS to installation
  path.
 
@@ -9,10 +9,10 @@ Subject: [PATCH] Adapting library's install_name on macOS to installation
  1 file changed, 7 insertions(+), 3 deletions(-)
 
 diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
-index 240f6d0..d1be244 100644
+index 7e21fb2..067d3e0 100644
 --- a/src/CMakeLists.txt
 +++ b/src/CMakeLists.txt
-@@ -87,13 +87,15 @@ if ( APPLE )
+@@ -94,13 +94,15 @@ if ( APPLE )
      list(APPEND LIBCXXABI_SHARED_LINK_FLAGS
        "-compatibility_version 1"
        "-current_version 1"
@@ -28,9 +28,9 @@ index 240f6d0..d1be244 100644
 +      "-install_name ${CMAKE_INSTALL_PREFIX}/lib/libc++abi.1.dylib"
 +      "-nodefaultlibs")
    endif()
- endif()
  
-@@ -145,7 +147,9 @@ if (LIBCXXABI_ENABLE_SHARED)
+   if (LLVM_USE_SANITIZER)
+@@ -178,7 +180,9 @@ if (LIBCXXABI_ENABLE_SHARED)
                            SOVERSION
                              "1"
                            VERSION
@@ -38,9 +38,9 @@ index 240f6d0..d1be244 100644
 +                            "1.0"
 +                          INSTALL_NAME_DIR
 +                            "${CMAKE_INSTALL_PREFIX}/lib")
-   list(APPEND LIBCXXABI_TARGETS "cxxabi_shared")
- endif()
- 
+   list(APPEND LIBCXXABI_BUILD_TARGETS "cxxabi_shared")
+   if (LIBCXXABI_INSTALL_SHARED_LIBRARY)
+     list(APPEND LIBCXXABI_INSTALL_TARGETS "cxxabi_shared")
 -- 
-2.13.6
+2.21.0
 

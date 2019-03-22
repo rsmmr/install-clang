@@ -1,59 +1,34 @@
-From d41b12a70bfafbb585eee28cf1f5cdc94ee85cdc Mon Sep 17 00:00:00 2001
+From 455a3f43f7a08269c2b839bc17fe9e97ff8318b6 Mon Sep 17 00:00:00 2001
 From: Robin Sommer <robin@icir.org>
-Date: Sun, 3 Jun 2018 03:10:55 +0000
+Date: Sun, 10 Mar 2019 11:12:13 -0700
 Subject: [PATCH] Adapting linker arguments.
 
 - Adding -L<prefix>/lib to default linker arguments.
-- On Linux and FreeBSD, add -rpath.
-- Fix FreeBSD builtin library search paths.
+- On Linux, add -rpath.
 ---
  lib/Driver/ToolChains/CommonArgs.cpp | 9 +++++++++
- lib/Driver/ToolChains/FreeBSD.cpp    | 5 +++++
- 2 files changed, 14 insertions(+)
+ 1 file changed, 9 insertions(+)
 
 diff --git a/lib/Driver/ToolChains/CommonArgs.cpp b/lib/Driver/ToolChains/CommonArgs.cpp
-index f26880123d..8243bf751f 100644
+index d7e316befa..df2b3582d2 100644
 --- a/lib/Driver/ToolChains/CommonArgs.cpp
 +++ b/lib/Driver/ToolChains/CommonArgs.cpp
-@@ -184,6 +184,15 @@ void tools::AddLinkerInputs(const ToolChain &TC, const InputInfoList &Inputs,
+@@ -189,6 +189,15 @@ void tools::AddLinkerInputs(const ToolChain &TC, const InputInfoList &Inputs,
    if (!TC.isCrossCompiling()) {
      addDirectoryList(Args, CmdArgs, "-L", "LIBRARY_PATH");
    }
 +
 +  if (!TC.isCrossCompiling()) {
-+    std::string lib_dir = llvm::sys::path::parent_path(D.InstalledDir).str() + "/lib";
++    std::string lib_dir = llvm::sys::path::parent_path(TC.getDriver().Dir).str() + "/lib";
 +    CmdArgs.push_back(Args.MakeArgString("-L" + lib_dir));
 +
 +    auto os = TC.getTriple().getOS();
-+    if (os == llvm::Triple::Linux || os == llvm::Triple::FreeBSD)
++    if (os == llvm::Triple::Linux)
 +      CmdArgs.push_back(Args.MakeArgString("-rpath=" + lib_dir));
 +  }
  }
  
  void tools::AddTargetFeature(const ArgList &Args,
-diff --git a/lib/Driver/ToolChains/FreeBSD.cpp b/lib/Driver/ToolChains/FreeBSD.cpp
-index dd0334b9c2..3e501ff403 100644
---- a/lib/Driver/ToolChains/FreeBSD.cpp
-+++ b/lib/Driver/ToolChains/FreeBSD.cpp
-@@ -17,6 +17,7 @@
- #include "clang/Driver/Options.h"
- #include "clang/Driver/SanitizerArgs.h"
- #include "llvm/Option/ArgList.h"
-+#include "llvm/Support/Path.h"
- 
- using namespace clang::driver;
- using namespace clang::driver::tools;
-@@ -313,6 +314,10 @@ void freebsd::Linker::ConstructJob(Compilation &C, const JobAction &JA,
- FreeBSD::FreeBSD(const Driver &D, const llvm::Triple &Triple,
-                  const ArgList &Args)
-     : Generic_ELF(D, Triple, Args) {
-+  // Look in the prefix before going into /usr/lib. Otherwise we'll wind up
-+  // with the wrong libc++.
-+  std::string lib_dir = llvm::sys::path::parent_path(getDriver().Dir).str() + "/lib";
-+  getFilePaths().push_back(lib_dir);
- 
-   // When targeting 32-bit platforms, look for '/usr/lib32/crt1.o' and fall
-   // back to '/usr/lib' if it doesn't exist.
 -- 
-2.17.0
+2.14.5
 

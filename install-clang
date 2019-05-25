@@ -63,6 +63,7 @@ perform_lld_build=1        # If 1, attempt to build LLDB.
 perform_extra_build=1      # If 1, attempt to build clang-extra tools.  -- TODO: clangd doesn't compile
 perform_cleanup=0          # If 1, delete all source and build directories.
 assertions=off             # If "on", enable LLVM assertions.
+build_shared_libs=off      # If "on", build & link shared libraries.
 parallelism=4              # The value X to pass to make -j X to build in parallel.
 buildtype=Release          # LLVM/clang build type.
 mode=install               # Install from scratch.
@@ -90,6 +91,7 @@ usage()
     echo "    -j <n>     build with <n> threads in parallel [default: ${parallelism}]"
     echo "    -m         use git/master instead of preconfigured versions"
     echo "    -s <stage> begin build from <stage> [0, 1, 2]"
+    echo "    -S         build, and link against, shared libraries (instead of static libraries)"
     echo "    -u         update an existing build in <prefix> instead of installing new"
     echo ""
     echo "Environment variables:"
@@ -143,6 +145,10 @@ while getopts "Ab::j:lms:ucCh?" opt ; do
 
         b)
             buildtype=$OPTARG
+            ;;
+
+        S)
+            build_shared_libs=on
             ;;
 
     esac
@@ -378,7 +384,7 @@ if [ "$OS" == "Darwin" ]; then
     CMAKE_stage1="-DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++"
 
 elif [ "$OS" == "Linux" ] || [ "$OS" == "FreeBSD" ]; then
-    CMAKE_stage1="-DLIBCXX_ENABLE_STATIC_ABI_LIBRARY=on -DLIBCXX_ENABLE_ABI_LINKER_SCRIPT=off -DLIBCXXABI_ENABLE_SHARED=off -DBUILD_SHARED_LIBS=on"
+    CMAKE_stage1="-DLIBCXX_ENABLE_STATIC_ABI_LIBRARY=on -DLIBCXX_ENABLE_ABI_LINKER_SCRIPT=off -DLIBCXXABI_ENABLE_SHARED=off"
     CMAKE_stage2=$CMAKE_stage1
     default_includes=$(add_include_path features.h /usr/include)
     default_includes=$(add_include_path sys/cdefs.h /usr/include/${triple} /usr/include)
@@ -387,7 +393,7 @@ else
     exit 1
 fi
 
-CMAKE_common="-DBUILD_SHARED_LIBS=on -DLLVM_TARGETS_TO_BUILD=${targets}"
+CMAKE_common="-DBUILD_SHARED_LIBS=${build_shared_libs} -DLLVM_TARGETS_TO_BUILD=${targets}"
 CMAKE_stage0="${CMAKE_common} ${CMAKE_stage0} -DLLVM_TOOL_LIBCXX_BUILD=off -DLLVM_TOOL_LIBCXXABI_BUILD=off -DLLVM_TOOL_COMPILER_RT_BUILD=off -DLLVM_TOOL_LLD_BUILD=off -DLLVM_TOOL_LLDB_BUILD=off"
 CMAKE_stage1="${CMAKE_common} ${CMAKE_stage1} -DLLVM_ENABLE_ASSERTIONS=${assertions} -DLLVM_TOOL_LLD_BUILD=off -DLLVM_TOOL_LLDB_BUILD=off"
 CMAKE_stage2="${CMAKE_common} ${CMAKE_stage2} -DLLVM_ENABLE_ASSERTIONS=${assertions} -DLLDB_DISABLE_PYTHON=on"
@@ -401,6 +407,7 @@ CXX_stage0="$cxx"
 CXXFLAGS_stage0=""
 CMAKE_stage0="${CMAKE_stage0}"
 BUILD_TYPE_stage0=${buildtype}
+EXE_LINKER_FLAGS_stage0=""
 
 # Stage 1 options. Compile against standard libraries.
 
@@ -414,15 +421,22 @@ fi
 
 CXXFLAGS_stage1=""
 BUILD_TYPE_stage1=${buildtype}
+EXE_LINKER_FLAGS_stage1=""
 
 # Stage 2 options. Compile against our own libraries.
 
 CC_stage2=$prefix/bin/clang
 CXX_stage2=$prefix/bin/clang++
-CFLAGS_stage2="-stdlib=libc++"
+CFLAGS_stage2=""
 CXXFLAGS_stage2="-stdlib=libc++"
 CMAKE_stage2="${CMAKE_stage2}"
 BUILD_TYPE_stage2=${buildtype}
+
+if [ "${build_shared_libs}" != "on" ]; then
+    EXE_LINKER_FLAGS_stage2="-static-libgcc -static-libstdc++"
+else
+    EXE_LINKER_FLAGS_stage2=""
+fi
 
 #### Compile the stages.
 
@@ -450,6 +464,7 @@ for stage in 0 1 2; do
              -DLLVM_REQUIRES_RTTI=1 \
              -DCMAKE_INSTALL_PREFIX=${prefix} \
              -DC_INCLUDE_DIRS=${default_includes} \
+             -DCMAKE_EXE_LINKER_FLAGS="`st EXE_LINKER_FLAGS`" \
              ${addl_cmake} \
              `st CMAKE` \
              .. && \

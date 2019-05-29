@@ -31,6 +31,7 @@ To see the available options, use `-h`:
         -j <n>     build with <n> threads in parallel [default: 1]
         -m         use git/master instead of preconfigured versions
         -s <stage> begin build from <stage> [0, 1, 2]
+        -S         build, and link against, shared libraries (instead of static libraries)        
         -u         update an existing build in <prefix> instead of installing new
 
     Environment variables:
@@ -105,8 +106,13 @@ compared to the 6.0 version:
 * On macOS, we now set clang's DEFAULT_SYSROOT to the current macOS
   SDK.
 
-* We apply a custom clang-format patch that adds a couple of custom
-  formatting options.
+* We apply a custom clang-format patch that adds a
+  `SpacesAroundConditions` option.
+
+* We backport clang-format's new option `SpaceAfterLogicalNot` from git.
+
+* We build, and link against, static libraries by default (just as
+  LLVM does). Option -S switches back to shared libraries.
 
 * Removed any customziation for FreeBSD; support had been untested in
   a long time.

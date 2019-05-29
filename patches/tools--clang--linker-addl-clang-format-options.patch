@@ -1,100 +1,79 @@
-From ce9b01fa17c60979e541c2c5e188597965e7c5d6 Mon Sep 17 00:00:00 2001
+From 5b96e614a3ec918ffdad571a54802220c5a8da81 Mon Sep 17 00:00:00 2001
 From: Robin Sommer <robin@icir.org>
-Date: Tue, 19 Mar 2019 09:52:44 -0700
-Subject: [PATCH] Add two new clang-format options.
+Date: Sun, 26 May 2019 14:31:07 +0000
+Subject: [PATCH] Add a new clang-format option to insert spaces around
+ conditions.
 
 SpacesAroundConditions (bool)
-  If true, spaces will be inserted around if/for/while conditions.
-
-SpacesAfterNot (bool)
-  If true, spaces will be inserted after '!' at the beginning of
-  conditions.
+  If true, spaces will be inserted around if/for/while (and similar) conditions.
 ---
- docs/ClangFormatStyleOptions.rst |  6 ++++++
- include/clang/Format/Format.h    |  8 ++++++++
- lib/Format/Format.cpp            |  4 ++++
- lib/Format/TokenAnnotator.cpp    | 22 ++++++++++++++++++++--
- unittests/Format/FormatTest.cpp  | 20 ++++++++++++++++++++
- 5 files changed, 58 insertions(+), 2 deletions(-)
+ docs/ClangFormatStyleOptions.rst |  3 +++
+ include/clang/Format/Format.h    |  4 ++++
+ lib/Format/Format.cpp            |  2 ++
+ lib/Format/TokenAnnotator.cpp    | 16 +++++++++++++++-
+ unittests/Format/FormatTest.cpp  | 11 +++++++++++
+ 5 files changed, 35 insertions(+), 1 deletion(-)
 
 diff --git a/docs/ClangFormatStyleOptions.rst b/docs/ClangFormatStyleOptions.rst
-index 054d5c32c6..fc9fc8a964 100644
+index 230da49e44..3ed574125b 100644
 --- a/docs/ClangFormatStyleOptions.rst
 +++ b/docs/ClangFormatStyleOptions.rst
-@@ -1987,6 +1987,12 @@ the configuration (without a prefix: ``Auto``).
+@@ -1994,6 +1994,9 @@ the configuration (without a prefix: ``Auto``).
       int a[ 5 ];                    vs.     int a[5];
       std::unique_ptr<int[]> foo() {} // Won't be affected
  
-+**SpacesAfterNot** (``bool``)
-+  If ``true``, spaces will be inserted after ``!``.
-+
 +**SpacesAroundConditions** (``bool``)
-+  If ``true``, spaces will be inserted around if/for/while conditions.
++  If ``true``, spaces will be inserted around if/for/while (and similar) conditions.
 +
  **Standard** (``LanguageStandard``)
    Format compatible with this standard, e.g. use ``A<A<int> >``
    instead of ``A<A<int>>`` for ``LS_Cpp03``.
 diff --git a/include/clang/Format/Format.h b/include/clang/Format/Format.h
-index cb37b0c890..0d8265e41c 100644
+index 0fd86b016c..b9e368da8b 100644
 --- a/include/clang/Format/Format.h
 +++ b/include/clang/Format/Format.h
-@@ -1678,6 +1678,12 @@ struct FormatStyle {
+@@ -1685,6 +1685,9 @@ struct FormatStyle {
    /// \endcode
    bool SpacesInSquareBrackets;
  
-+  /// \brief If ``true``, spaces will be inserted after ``!``.
-+  bool SpacesAfterNot;
-+
-+  /// \brief If ``true``, spaces will be inserted around if/for/while conditions.
++  /// \brief If ``true``, spaces will be inserted around if/for/while (and similar) conditions.
 +  bool SpacesAroundConditions;
 +
    /// Supported language standards.
    enum LanguageStandard {
      /// Use C++03-compatible syntax.
-@@ -1806,6 +1812,8 @@ struct FormatStyle {
+@@ -1814,6 +1817,7 @@ struct FormatStyle {
             SpacesInCStyleCastParentheses == R.SpacesInCStyleCastParentheses &&
             SpacesInParentheses == R.SpacesInParentheses &&
             SpacesInSquareBrackets == R.SpacesInSquareBrackets &&
-+           SpacesAfterNot == R.SpacesAfterNot &&
 +           SpacesAroundConditions == R.SpacesAroundConditions &&
             Standard == R.Standard && TabWidth == R.TabWidth &&
             StatementMacros == R.StatementMacros && UseTab == R.UseTab;
    }
 diff --git a/lib/Format/Format.cpp b/lib/Format/Format.cpp
-index 2c4f876054..6cc5adc534 100644
+index a110f9233f..11e990e905 100644
 --- a/lib/Format/Format.cpp
 +++ b/lib/Format/Format.cpp
-@@ -469,6 +469,8 @@ template <> struct MappingTraits<FormatStyle> {
+@@ -470,6 +470,7 @@ template <> struct MappingTraits<FormatStyle> {
                     Style.SpacesInCStyleCastParentheses);
      IO.mapOptional("SpacesInParentheses", Style.SpacesInParentheses);
      IO.mapOptional("SpacesInSquareBrackets", Style.SpacesInSquareBrackets);
-+    IO.mapOptional("SpacesAfterNot", Style.SpacesAfterNot);
 +    IO.mapOptional("SpacesAroundConditions", Style.SpacesAroundConditions);
      IO.mapOptional("Standard", Style.Standard);
      IO.mapOptional("StatementMacros", Style.StatementMacros);
      IO.mapOptional("TabWidth", Style.TabWidth);
-@@ -703,6 +705,8 @@ FormatStyle getLLVMStyle() {
+@@ -705,6 +706,7 @@ FormatStyle getLLVMStyle() {
    LLVMStyle.SpaceBeforeAssignmentOperators = true;
    LLVMStyle.SpaceBeforeCpp11BracedList = false;
    LLVMStyle.SpacesInAngles = false;
-+  LLVMStyle.SpacesAfterNot = false;
 +  LLVMStyle.SpacesAroundConditions = false;
  
    LLVMStyle.PenaltyBreakAssignment = prec::Assignment;
    LLVMStyle.PenaltyBreakComment = 300;
 diff --git a/lib/Format/TokenAnnotator.cpp b/lib/Format/TokenAnnotator.cpp
-index 24c2f998c3..e94931ca69 100644
+index b84d6ef2bc..a63977aa45 100644
 --- a/lib/Format/TokenAnnotator.cpp
 +++ b/lib/Format/TokenAnnotator.cpp
-@@ -366,7 +366,7 @@ private:
-       // specifier parameter, although this is technically valid:
-       // [[foo(:)]]
-       if (AttrTok->is(tok::colon) ||
--          AttrTok->startsSequence(tok::identifier, tok::identifier) || 
-+          AttrTok->startsSequence(tok::identifier, tok::identifier) ||
-           AttrTok->startsSequence(tok::r_paren, tok::identifier))
-         return false;
-       if (AttrTok->is(tok::ellipsis))
 @@ -2407,6 +2407,20 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
      return Right.is(tok::hash);
    if (Left.is(tok::l_paren) && Right.is(tok::r_paren))
@@ -116,18 +95,7 @@ index 24c2f998c3..e94931ca69 100644
    if (Left.is(tok::l_paren) || Right.is(tok::r_paren))
      return (Right.is(TT_CastRParen) ||
              (Left.MatchingParen && Left.MatchingParen->is(TT_CastRParen)))
-@@ -2760,6 +2774,10 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
-       return false;
-     return true;
-   }
-+  if (Style.SpacesAfterNot && Left.is(tok::exclaim) && Left.Previous) {
-+    if ( Left.Previous->isOneOf(tok::l_paren, tok::kw_return, tok::semi, tok::pipepipe, tok::ampamp) )
-+        return true;
-+  }
-   if (Left.is(TT_UnaryOperator))
-     return Right.is(TT_BinaryOperator);
- 
-@@ -2791,7 +2809,7 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
+@@ -2792,7 +2806,7 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
      // The identifier might actually be a macro name such as ALWAYS_INLINE. If
      // this turns out to be too lenient, add analysis of the identifier itself.
      return Right.WhitespaceRange.getBegin() != Right.WhitespaceRange.getEnd();
@@ -137,30 +105,21 @@ index 24c2f998c3..e94931ca69 100644
              Style.Standard == FormatStyle::LS_Cpp03) ||
             !(Left.isOneOf(tok::l_paren, tok::r_paren, tok::l_square,
 diff --git a/unittests/Format/FormatTest.cpp b/unittests/Format/FormatTest.cpp
-index c05fceb476..3cf9cc76b2 100644
+index 79c02a674c..b1366e12fd 100644
 --- a/unittests/Format/FormatTest.cpp
 +++ b/unittests/Format/FormatTest.cpp
-@@ -10896,6 +10896,8 @@ TEST_F(FormatTest, ParsesConfigurationBools) {
+@@ -10907,6 +10907,7 @@ TEST_F(FormatTest, ParsesConfigurationBools) {
    CHECK_PARSE_BOOL(SpaceBeforeCtorInitializerColon);
    CHECK_PARSE_BOOL(SpaceBeforeInheritanceColon);
    CHECK_PARSE_BOOL(SpaceBeforeRangeBasedForLoopColon);
-+  CHECK_PARSE_BOOL(SpacesAfterNot);
 +  CHECK_PARSE_BOOL(SpacesAroundConditions);
  
    CHECK_PARSE_NESTED_BOOL(BraceWrapping, AfterClass);
    CHECK_PARSE_NESTED_BOOL(BraceWrapping, AfterControlStatement);
-@@ -12807,6 +12809,24 @@ TEST_F(FormatTest, GuessLanguageWithChildLines) {
+@@ -12824,6 +12825,16 @@ TEST_F(FormatTest, GuessLanguageWithChildLines) {
        guessLanguage("foo.h", "#define FOO ({ foo(); ({ NSString *s; }) })"));
  }
  
-+TEST_F(FormatTest, SpacesAfterNot) {
-+  FormatStyle Spaces = getLLVMStyle();
-+  Spaces.SpacesAfterNot = true;
-+  verifyFormat("if (! a)\n  return;", Spaces);
-+  verifyFormat("while (! (x || y))\n  return;", Spaces);
-+  verifyFormat("do {\n} while (! foo);", Spaces);
-+}
-+
 +TEST_F(FormatTest, SpacesAroundConditions) {
 +  FormatStyle Spaces = getLLVMStyle();
 +  Spaces.SpacesAroundConditions = true;

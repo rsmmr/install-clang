@@ -169,7 +169,7 @@ if [ "${use_master}" != "1" ]; then
     version_lld=release_80
     version_extra=release_80
 
-    cherrypick=""
+    cherrypick="tools/clang 9a63380260860" # clang-format: SpaceAfterLogicalNot
 else
     # git version to checkout.
     version_llvm=master

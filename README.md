@@ -92,7 +92,7 @@ A prebuilt image is available at https://hub.docker.com/r/rsmmr/clang/ .
 News
 ----
 
-### Version for Clang 8 (git tag `release_80`)
+### Version for Clang 8 (git branch `release_80`)
 
 The install-clang script for Clang 8.0 comes with these changes
 compared to the 6.0 version:
@@ -117,7 +117,7 @@ compared to the 6.0 version:
 * Removed any customziation for FreeBSD; support had been untested in
   a long time.
 
-### Version for Clang 6 (git tag `release_60`)
+### Version for Clang 6 (git branch `release_60`)
 
 The install-clang script for Clang 6.0 comes with these changes
 compared to the 3.5 version:

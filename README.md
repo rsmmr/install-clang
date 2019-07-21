@@ -31,7 +31,7 @@ To see the available options, use `-h`:
         -j <n>     build with <n> threads in parallel [default: 1]
         -m         use git/master instead of preconfigured versions
         -s <stage> begin build from <stage> [0, 1, 2]
-        -S         build, and link against, shared libraries (instead of static libraries)        
+        -S         build, and link against, shared libraries (instead of static libraries)
         -u         update an existing build in <prefix> instead of installing new
 
     Environment variables:
@@ -92,7 +92,7 @@ A prebuilt image is available at https://hub.docker.com/r/rsmmr/clang/ .
 News
 ----
 
-### Version for Clang 8.0 (git `master`)
+### Version for Clang 8 (git tag `release_80`)
 
 The install-clang script for Clang 8.0 comes with these changes
 compared to the 6.0 version:
@@ -117,7 +117,7 @@ compared to the 6.0 version:
 * Removed any customziation for FreeBSD; support had been untested in
   a long time.
 
-### Version for Clang 6.0 (git tag `release_60`)
+### Version for Clang 6 (git tag `release_60`)
 
 The install-clang script for Clang 6.0 comes with these changes
 compared to the 3.5 version:

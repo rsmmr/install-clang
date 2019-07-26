@@ -92,7 +92,11 @@ A prebuilt image is available at https://hub.docker.com/r/rsmmr/clang/ .
 News
 ----
 
-### Version for Clang 8 (git branch `release_80`)
+### Version for Clang 9 (git branch `release_90`; in progress)
+
+* Switch to using the LLVM "mono repo".
+
+### Version for Clang 8 (git branch `release_80`, also git `master`)
 
 The install-clang script for Clang 8.0 comes with these changes
 compared to the 6.0 version:

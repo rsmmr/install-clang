@@ -68,7 +68,7 @@ parallelism=4              # The value X to pass to make -j X to build in parall
 buildtype=Release          # LLVM/clang build type.
 mode=install               # Install from scratch.
 targets=host               # LLVM_TARGETS_TO_BUILD ("all" builds them all).
-git_base=https://github.com/llvm-mirror
+git_base=https://github.com/llvm
 
 if eval ${cxx} --version | grep -q clang; then
     perform_stage0=0
@@ -158,33 +158,24 @@ shift $(expr $OPTIND - 1)
 prefix=`echo $1 | sed 's#/$##'`
 shift
 
-if [ "${use_master}" != "1" ]; then
-    # git version to checkout.
-    version_llvm=release_80
-    version_clang=release_80
-    version_libcxx=release_80
-    version_compilerrt=release_80
-    version_libcxxabi=release_80
-    version_lldb=release_80
-    version_lld=release_80
-    version_extra=release_80
-
-    cherrypick="tools/clang 9a63380260860" # clang-format: SpaceAfterLogicalNot
-else
-    # git version to checkout.
-    version_llvm=master
-    version_clang=master
-    version_libcxx=master
-    version_compilerrt=master
-    version_libcxxabi=master
-    version_lldb=master
-    version_lld=master
-    version_extra=master
-fi
-
 if [ "$mode" == "" -o "$prefix" == "" ]; then
     usage
     exit 1
+fi
+
+projects="clang;libcxx;compiler-rt;libcxxabi"
+
+test ${perform_lldb_build} = 1 && project="${projects};lldb"
+test ${perform_lld_build} = 1 && project="${projects};lld"
+test ${perform_extra_build} = 1 && project="${projects};clang-tools-extra"
+
+if [ "${use_master}" != "1" ]; then
+    # git version to checkout.
+    version=release/9.x
+    cherrypick=""
+else
+    # git version to checkout.
+    version=master
 fi
 
 if [ ! -d $prefix ]; then
@@ -215,11 +206,6 @@ export REQUIRES_RTTI=1
 export PATH=$prefix/bin:$PATH
 
 src="$prefix/src/llvm"
-src_libcxxabi=${src}/projects/libcxxabi
-src_libcxx=${src}/projects/libcxx
-src_compilerrt=${src}/projects/compiler-rt
-src_lldb=${src}/tools/lldb
-src_lld=${src}/tools/lld
 libcxx_include=$prefix/include/c++/v1
 libcxx_lib=$prefix/lib
 default_includes=/usr/include
@@ -298,66 +284,15 @@ if [ "${perform_clone}" == "1" ]; then
         echo Changing directory to `dirname $src` for installing  ...
         cd `dirname $src`
 
-        git clone ${git_base}/llvm.git `basename $src`
-
-        ( cd $src/tools && git clone ${git_base}/clang.git )
-        ( cd $src/projects && git clone ${git_base}/libcxx )
-        ( cd $src/projects && git clone ${git_base}/compiler-rt )
-
-        ( cd $src && git checkout -q ${version_llvm} )
-        ( cd $src/tools/clang && git checkout -q ${version_clang}  )
-        ( cd ${src_libcxx} && git checkout -q ${version_libcxx} )
-        ( cd ${src_compilerrt} && git checkout -q ${version_compilerrt} )
-
-        ( cd $src/projects && git clone ${git_base}/libcxxabi )
-        ( cd ${src_libcxxabi} && git checkout -q ${version_libcxxabi} )
-
-        if [ "${perform_extra_build}" == "1" ]; then
-            ( cd $src/tools/clang/tools && git clone ${git_base}/clang-tools-extra.git extra )
-            ( cd $src/tools/clang/tools/extra && git checkout -q ${version_extra} )
-        fi
-
-        if [ "${perform_lldb_build}" == "1" ]; then
-            ( cd `dirname ${src_lldb}` && git clone ${git_base}/lldb `basename ${src_lldb}`)
-            ( cd ${src_lldb} && git checkout -q ${version_lldb}  )
-        fi
-
-        if [ "${perform_lld_build}" == "1" ]; then
-            ( cd `dirname ${src_lld}` && git clone ${git_base}/lld `basename ${src_lld}`)
-            ( cd ${src_lld} && git checkout -q ${version_lld}  )
-        fi
+        git clone ${git_base}/llvm-project.git `basename $src`
+        ( cd $src && git checkout -q ${version} )
 
     else
         echo Changing directory to `dirname $src` for updating ...
         cd `dirname $src`
 
         ( cd ${src} && git pull --rebase )
-        ( cd ${src}/tools/clang && git pull --rebase )
-        ( cd ${src_libcxx} && git pull --rebase )
-        ( cd ${src_compilerrt} && git pull --rebase )
-
-        ( cd $src && git checkout -q ${version_llvm} )
-        ( cd $src/tools/clang && git checkout -q ${version_clang}  )
-        ( cd ${src_libcxx} && git checkout -q ${version_libcxx} )
-        ( cd ${src_compilerrt} && git checkout -q ${version_compilerrt} )
-
-        ( cd ${src_libcxxabi} && git pull --rebase )
-        ( cd ${src_libcxxabi} && git checkout -q ${version_libcxxabi} )
-
-        if [ "${perform_extra_build}" == "1" ]; then
-            ( cd $src/tools/extra && git pull --rebase )
-            ( cd $src/tools/extra && git checkout -q ${version_extra} )
-        fi
-
-        if [ "${perform_lldb_build}" == "1" ]; then
-            ( cd ${src_lldb} && git pull --rebase )
-            ( cd ${src_lldb} && git checkout -q ${version_lldb}  )
-        fi
-
-        if [ "${perform_lld_build}" == "1" ]; then
-            ( cd ${src_lld} && git pull --rebase )
-            ( cd ${src_lld} && git checkout -q ${version_lld}  )
-        fi
+        ( cd $src && git checkout -q ${version} )
     fi
 
     # Cherry pick additional commits from master.
@@ -393,7 +328,7 @@ else
     exit 1
 fi
 
-CMAKE_common="-DBUILD_SHARED_LIBS=${build_shared_libs} -DLLVM_TARGETS_TO_BUILD=${targets}"
+CMAKE_common="-DLLVM_ENABLE_PROJECTS=${projects} -DBUILD_SHARED_LIBS=${build_shared_libs} -DLLVM_TARGETS_TO_BUILD=${targets}"
 CMAKE_stage0="${CMAKE_common} ${CMAKE_stage0} -DLLVM_TOOL_LIBCXX_BUILD=off -DLLVM_TOOL_LIBCXXABI_BUILD=off -DLLVM_TOOL_COMPILER_RT_BUILD=off -DLLVM_TOOL_LLD_BUILD=off -DLLVM_TOOL_LLDB_BUILD=off"
 CMAKE_stage1="${CMAKE_common} ${CMAKE_stage1} -DLLVM_ENABLE_ASSERTIONS=${assertions} -DLLVM_TOOL_LLD_BUILD=off -DLLVM_TOOL_LLDB_BUILD=off"
 CMAKE_stage2="${CMAKE_common} ${CMAKE_stage2} -DLLVM_ENABLE_ASSERTIONS=${assertions} -DLLDB_DISABLE_PYTHON=on"
@@ -467,7 +402,7 @@ for stage in 0 1 2; do
              -DCMAKE_EXE_LINKER_FLAGS="`st EXE_LINKER_FLAGS`" \
              ${addl_cmake} \
              `st CMAKE` \
-             .. && \
+             ${src}/llvm && \
        make -j $parallelism && \
        make install \
      )

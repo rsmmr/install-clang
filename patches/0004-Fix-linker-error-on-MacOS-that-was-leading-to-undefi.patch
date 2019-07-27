@@ -1,0 +1,25 @@
+From 51a358a0d07e4e68f25a49695cc575a6491b552f Mon Sep 17 00:00:00 2001
+From: Robin Sommer <robin@icir.org>
+Date: Sat, 27 Jul 2019 03:46:43 +0000
+Subject: [PATCH 4/5] Fix linker error on MacOS that was leading to undefined
+ symbols.
+
+---
+ lldb/tools/debugserver/source/CMakeLists.txt | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/lldb/tools/debugserver/source/CMakeLists.txt b/lldb/tools/debugserver/source/CMakeLists.txt
+index 303fd28caf6..930c3a13d21 100644
+--- a/lldb/tools/debugserver/source/CMakeLists.txt
++++ b/lldb/tools/debugserver/source/CMakeLists.txt
+@@ -59,6 +59,7 @@ function(get_debugserver_codesign_identity result)
+ endfunction()
+ 
+ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libc++ -Wl,-sectcreate,__TEXT,__info_plist,${CMAKE_CURRENT_SOURCE_DIR}/../resources/lldb-debugserver-Info.plist")
++set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-undefined,dynamic_lookup")
+ 
+ check_cxx_compiler_flag("-Wno-gnu-zero-variadic-macro-arguments"
+                         CXX_SUPPORTS_NO_GNU_ZERO_VARIADIC_MACRO_ARGUMENTS)
+-- 
+2.14.5
+

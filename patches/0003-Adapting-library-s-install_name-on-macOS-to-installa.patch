@@ -1,18 +1,18 @@
-From b3ed22f8d142f9363036e5dd621ce9a5e5309e76 Mon Sep 17 00:00:00 2001
+From 8f3e9417f62d63ddd5548647dad368bb4cbbee56 Mon Sep 17 00:00:00 2001
 From: Robin Sommer <robin@icir.org>
-Date: Sun, 10 Mar 2019 11:04:42 -0700
-Subject: [PATCH] Adapting library's install_name on macOS to installation
+Date: Sat, 27 Jul 2019 03:35:48 +0000
+Subject: [PATCH 3/5] Adapting library's install_name on macOS to installation
  path.
 
 ---
- src/CMakeLists.txt | 10 +++++++---
+ libcxxabi/src/CMakeLists.txt | 10 +++++++---
  1 file changed, 7 insertions(+), 3 deletions(-)
 
-diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
-index 7e21fb2..067d3e0 100644
---- a/src/CMakeLists.txt
-+++ b/src/CMakeLists.txt
-@@ -94,13 +94,15 @@ if ( APPLE )
+diff --git a/libcxxabi/src/CMakeLists.txt b/libcxxabi/src/CMakeLists.txt
+index 45d4d025361..f91f3f4af4d 100644
+--- a/libcxxabi/src/CMakeLists.txt
++++ b/libcxxabi/src/CMakeLists.txt
+@@ -102,13 +102,15 @@ if ( APPLE )
      list(APPEND LIBCXXABI_SHARED_LINK_FLAGS
        "-compatibility_version 1"
        "-current_version 1"
@@ -30,7 +30,7 @@ index 7e21fb2..067d3e0 100644
    endif()
  
    if (LLVM_USE_SANITIZER)
-@@ -178,7 +180,9 @@ if (LIBCXXABI_ENABLE_SHARED)
+@@ -177,7 +179,9 @@ if (LIBCXXABI_ENABLE_SHARED)
                            SOVERSION
                              "1"
                            VERSION
@@ -38,9 +38,9 @@ index 7e21fb2..067d3e0 100644
 +                            "1.0"
 +                          INSTALL_NAME_DIR
 +                            "${CMAKE_INSTALL_PREFIX}/lib")
-   list(APPEND LIBCXXABI_BUILD_TARGETS "cxxabi_shared")
-   if (LIBCXXABI_INSTALL_SHARED_LIBRARY)
-     list(APPEND LIBCXXABI_INSTALL_TARGETS "cxxabi_shared")
+ 
+   if(LIBCXXABI_ENABLE_PIC)
+     set_target_properties(cxxabi_shared PROPERTIES POSITION_INDEPENDENT_CODE ON)
 -- 
-2.21.0
+2.14.5
 

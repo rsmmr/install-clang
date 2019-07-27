@@ -1,0 +1,42 @@
+From 38b3e271a032d98c60cb1e74011384479922a44d Mon Sep 17 00:00:00 2001
+From: Robin Sommer <robin@icir.org>
+Date: Sat, 27 Jul 2019 03:48:18 +0000
+Subject: [PATCH 5/5] Fix building with -fPIC.
+
+---
+ lldb/cmake/modules/AddLLDB.cmake | 12 +++++-------
+ 1 file changed, 5 insertions(+), 7 deletions(-)
+
+diff --git a/lldb/cmake/modules/AddLLDB.cmake b/lldb/cmake/modules/AddLLDB.cmake
+index 4c99278c583..3f37b1b06cc 100644
+--- a/lldb/cmake/modules/AddLLDB.cmake
++++ b/lldb/cmake/modules/AddLLDB.cmake
+@@ -67,13 +67,6 @@ function(add_lldb_library name)
+     set(libkind STATIC)
+   endif()
+ 
+-  #PIC not needed on Win
+-  # FIXME: Setting CMAKE_CXX_FLAGS here is a no-op, use target_compile_options
+-  # or omit this logic instead.
+-  if (NOT WIN32)
+-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+-  endif()
+-
+   if (PARAM_OBJECT)
+     add_library(${name} ${libkind} ${srcs})
+   else()
+@@ -121,6 +114,11 @@ function(add_lldb_library name)
+   # Add in any extra C++ compilation flags for this library.
+   target_compile_options(${name} PRIVATE ${PARAM_EXTRA_CXXFLAGS})
+ 
++  #PIC not needed on Win
++  if (NOT WIN32)
++    target_compile_options(${name} PRIVATE "-fPIC")
++  endif()
++
+   if(PARAM_PLUGIN)
+     set_target_properties(${name} PROPERTIES FOLDER "lldb plugins")
+   else()
+-- 
+2.14.5
+

@@ -163,12 +163,6 @@ if [ "$mode" == "" -o "$prefix" == "" ]; then
     exit 1
 fi
 
-projects="clang;libcxx;compiler-rt;libcxxabi"
-
-test ${perform_lldb_build} = 1 && project="${projects};lldb"
-test ${perform_lld_build} = 1 && project="${projects};lld"
-test ${perform_extra_build} = 1 && project="${projects};clang-tools-extra"
-
 if [ "${use_master}" != "1" ]; then
     # git version to checkout.
     version=release/9.x
@@ -243,28 +237,6 @@ function add_include_path
     echo  -n ${new_includes}
 }
 
-function apply_patch
-{
-    patch=$1
-    base=`basename $patch`
-
-    cwd=`pwd`
-
-    cd $src
-
-    if basename "$patch" | grep -q -- '--'; then
-        dir="$src/$(dirname $(echo $base | sed 's#--#/#g'))"
-        if [ ! -d "$dir" ]; then
-            return
-        fi
-
-        cd $dir
-    fi
-
-    echo === Applying ${patch} in $(pwd)
-    cat $patch | git am -3
-}
-
 #### Clone reposistories.
 
 export GIT_COMMITTER_EMAIL="`whoami`@localhost"
@@ -291,8 +263,8 @@ if [ "${perform_clone}" == "1" ]; then
         echo Changing directory to `dirname $src` for updating ...
         cd `dirname $src`
 
-        ( cd ${src} && git pull --rebase )
         ( cd $src && git checkout -q ${version} )
+        ( cd ${src} && git pull --rebase )
     fi
 
     # Cherry pick additional commits from master.
@@ -307,8 +279,9 @@ if [ "${perform_clone}" == "1" ]; then
     done
 
     # Apply any patches we might need.
-    for i in $patches/*; do
-        apply_patch $i
+    for i in $patches/0*; do
+        echo === Applying ${i} in $(pwd)
+        (cd ${src} && cat ${i} | git am -3)
     done
 
     echo === Done applying patches
@@ -318,7 +291,8 @@ fi
 if [ "$OS" == "Darwin" ]; then
     CMAKE_stage1="-DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++"
 
-elif [ "$OS" == "Linux" ] || [ "$OS" == "FreeBSD" ]; then
+elif [ "$OS" == "Linux" ]; then
+    CMAKE_common="-DLLVM_LIBDIR_SUFFIX=64" # lldb needs this
     CMAKE_stage1="-DLIBCXX_ENABLE_STATIC_ABI_LIBRARY=on -DLIBCXX_ENABLE_ABI_LINKER_SCRIPT=off -DLIBCXXABI_ENABLE_SHARED=off"
     CMAKE_stage2=$CMAKE_stage1
     default_includes=$(add_include_path features.h /usr/include)
@@ -328,10 +302,18 @@ else
     exit 1
 fi
 
-CMAKE_common="-DLLVM_ENABLE_PROJECTS=${projects} -DBUILD_SHARED_LIBS=${build_shared_libs} -DLLVM_TARGETS_TO_BUILD=${targets}"
-CMAKE_stage0="${CMAKE_common} ${CMAKE_stage0} -DLLVM_TOOL_LIBCXX_BUILD=off -DLLVM_TOOL_LIBCXXABI_BUILD=off -DLLVM_TOOL_COMPILER_RT_BUILD=off -DLLVM_TOOL_LLD_BUILD=off -DLLVM_TOOL_LLDB_BUILD=off"
-CMAKE_stage1="${CMAKE_common} ${CMAKE_stage1} -DLLVM_ENABLE_ASSERTIONS=${assertions} -DLLVM_TOOL_LLD_BUILD=off -DLLVM_TOOL_LLDB_BUILD=off"
-CMAKE_stage2="${CMAKE_common} ${CMAKE_stage2} -DLLVM_ENABLE_ASSERTIONS=${assertions} -DLLDB_DISABLE_PYTHON=on"
+projects_stage0="clang;libcxx"
+projects_stage1="clang;libcxx;compiler-rt;libcxxabi;libunwind"
+projects_stage2="clang;libcxx;compiler-rt;libcxxabi;libunwind"
+
+test ${perform_lldb_build} = 1 && projects_stage2="${projects_stage2};lldb"
+test ${perform_lld_build} = 1 && projects_stage2="${projects_stage2};lld"
+test ${perform_extra_build} = 1 && projects_stage2="${projects_stage2};clang-tools-extra"
+
+CMAKE_common="-DBUILD_SHARED_LIBS=${build_shared_libs} -DLLVM_TARGETS_TO_BUILD=${targets}"
+CMAKE_stage0="${CMAKE_common} ${CMAKE_stage0} -DLLVM_ENABLE_PROJECTS=${projects_stage0}"
+CMAKE_stage1="${CMAKE_common} ${CMAKE_stage1} -DLLVM_ENABLE_PROJECTS=${projects_stage1} -DLIBCXXABI_USE_LLVM_UNWINDER=YES -DLLVM_ENABLE_ASSERTIONS=${assertions}"
+CMAKE_stage2="${CMAKE_common} ${CMAKE_stage2} -DLLVM_ENABLE_PROJECTS=${projects_stage2} -DLIBCXXABI_USE_LLVM_UNWINDER=YES -DLLVM_ENABLE_ASSERTIONS=${assertions}"
 
 #### Configure the stages.
 

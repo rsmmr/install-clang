@@ -92,9 +92,12 @@ A prebuilt image is available at https://hub.docker.com/r/rsmmr/clang/ .
 News
 ----
 
-### Version for Clang 9 (git branch `release_90`; in progress)
+### Version for Clang 9 (in progress; git branch `release_90`)
 
-* Switch to using the LLVM "mono repo".
+* Switch to using the LLVM "mono repo" and adapt script's build
+  process.
+
+* Build libunwind, and link against it.
 
 ### Version for Clang 8 (git branch `release_80`, also git `master`)
 

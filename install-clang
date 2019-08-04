@@ -54,6 +54,8 @@ fi
 
 shopt -s nullglob
 
+git_base=https://github.com/llvm
+
 use_master=0
 perform_clone=1            # If 0, skip the cloning (for testing only).
 perform_stage1=1           # If 0, skip the 1st bootstrap stage (for testing only).
@@ -63,12 +65,18 @@ perform_lld_build=1        # If 1, attempt to build LLDB.
 perform_extra_build=1      # If 1, attempt to build clang-extra tools.  -- TODO: clangd doesn't compile
 perform_cleanup=0          # If 1, delete all source and build directories.
 assertions=off             # If "on", enable LLVM assertions.
-build_shared_libs=off      # If "on", build & link shared libraries.
 parallelism=4              # The value X to pass to make -j X to build in parallel.
 buildtype=Release          # LLVM/clang build type.
 mode=install               # Install from scratch.
 targets=host               # LLVM_TARGETS_TO_BUILD ("all" builds them all).
-git_base=https://github.com/llvm
+
+# Whether to build & link shared libraries. Default is static, except for macOS
+# where static fails.
+if [ "$OS" == "Darwin" ]; then
+    build_shared_libs=on
+else
+    build_shared_libs=off
+fi
 
 if eval ${cxx} --version | grep -q clang; then
     perform_stage0=0
@@ -91,7 +99,7 @@ usage()
     echo "    -j <n>     build with <n> threads in parallel [default: ${parallelism}]"
     echo "    -m         use git/master instead of preconfigured versions"
     echo "    -s <stage> begin build from <stage> [0, 1, 2]"
-    echo "    -S         build, and link against, shared libraries (instead of static libraries)"
+    echo "    -S         build, and link against, shared libraries (this is the default on macOS)"
     echo "    -u         update an existing build in <prefix> instead of installing new"
     echo ""
     echo "Environment variables:"

@@ -1,7 +1,7 @@
-From 51a358a0d07e4e68f25a49695cc575a6491b552f Mon Sep 17 00:00:00 2001
+From 221af05d6f7e28dc32370d91d88ee59cf11cd72c Mon Sep 17 00:00:00 2001
 From: Robin Sommer <robin@icir.org>
 Date: Sat, 27 Jul 2019 03:46:43 +0000
-Subject: [PATCH 4/5] Fix linker error on MacOS that was leading to undefined
+Subject: [PATCH 4/6] Fix linker error on MacOS that was leading to undefined
  symbols.
 
 ---
@@ -21,5 +21,5 @@ index 303fd28caf6..930c3a13d21 100644
  check_cxx_compiler_flag("-Wno-gnu-zero-variadic-macro-arguments"
                          CXX_SUPPORTS_NO_GNU_ZERO_VARIADIC_MACRO_ARGUMENTS)
 -- 
-2.14.5
+2.22.0
 

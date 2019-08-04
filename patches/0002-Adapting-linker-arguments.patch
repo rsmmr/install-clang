@@ -1,19 +1,19 @@
-From 53e07b7978a082a2e153227fb630c911fed39360 Mon Sep 17 00:00:00 2001
+From 2bfe354abbebac3a10c0540d73e93d7f34f62b10 Mon Sep 17 00:00:00 2001
 From: Robin Sommer <robin@icir.org>
 Date: Sat, 27 Jul 2019 03:32:54 +0000
-Subject: [PATCH 2/5] Adapting linker arguments.
+Subject: [PATCH 2/6] Adapting linker arguments.
 
 - Adding -L<prefix>/lib to default linker arguments.
 - On Linux, add -rpath.
 ---
- clang/lib/Driver/ToolChains/CommonArgs.cpp | 9 +++++++++
- 1 file changed, 9 insertions(+)
+ clang/lib/Driver/ToolChains/CommonArgs.cpp | 7 +++++++
+ 1 file changed, 7 insertions(+)
 
 diff --git a/clang/lib/Driver/ToolChains/CommonArgs.cpp b/clang/lib/Driver/ToolChains/CommonArgs.cpp
-index 99691cb43dc..032d8e873ff 100644
+index 99691cb43dc..3eb8199fbc2 100644
 --- a/clang/lib/Driver/ToolChains/CommonArgs.cpp
 +++ b/clang/lib/Driver/ToolChains/CommonArgs.cpp
-@@ -188,6 +188,15 @@ void tools::AddLinkerInputs(const ToolChain &TC, const InputInfoList &Inputs,
+@@ -188,6 +188,13 @@ void tools::AddLinkerInputs(const ToolChain &TC, const InputInfoList &Inputs,
    if (!TC.isCrossCompiling()) {
      addDirectoryList(Args, CmdArgs, "-L", "LIBRARY_PATH");
    }
@@ -21,14 +21,12 @@ index 99691cb43dc..032d8e873ff 100644
 +  if (!TC.isCrossCompiling()) {
 +    std::string lib_dir = llvm::sys::path::parent_path(TC.getDriver().Dir).str() + "/lib";
 +    CmdArgs.push_back(Args.MakeArgString("-L" + lib_dir));
-+
-+    auto os = TC.getTriple().getOS();
-+    if (os == llvm::Triple::Linux)
-+      CmdArgs.push_back(Args.MakeArgString("-rpath=" + lib_dir));
++    CmdArgs.push_back("-rpath");
++    CmdArgs.push_back(Args.MakeArgString(lib_dir));
 +  }
  }
  
  void tools::AddTargetFeature(const ArgList &Args,
 -- 
-2.14.5
+2.22.0
 

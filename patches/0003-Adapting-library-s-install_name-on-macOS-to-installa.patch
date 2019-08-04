@@ -1,7 +1,7 @@
-From 8f3e9417f62d63ddd5548647dad368bb4cbbee56 Mon Sep 17 00:00:00 2001
+From 8f3a646c971598b9f42dfc9a0de446887db7ed02 Mon Sep 17 00:00:00 2001
 From: Robin Sommer <robin@icir.org>
 Date: Sat, 27 Jul 2019 03:35:48 +0000
-Subject: [PATCH 3/5] Adapting library's install_name on macOS to installation
+Subject: [PATCH 3/6] Adapting library's install_name on macOS to installation
  path.
 
 ---
@@ -42,5 +42,5 @@ index 45d4d025361..f91f3f4af4d 100644
    if(LIBCXXABI_ENABLE_PIC)
      set_target_properties(cxxabi_shared PROPERTIES POSITION_INDEPENDENT_CODE ON)
 -- 
-2.14.5
+2.22.0
 

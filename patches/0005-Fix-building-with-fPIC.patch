@@ -1,7 +1,7 @@
-From 38b3e271a032d98c60cb1e74011384479922a44d Mon Sep 17 00:00:00 2001
+From fb7dd73be1fa2be8c5f9694cee97896c5a35bbea Mon Sep 17 00:00:00 2001
 From: Robin Sommer <robin@icir.org>
 Date: Sat, 27 Jul 2019 03:48:18 +0000
-Subject: [PATCH 5/5] Fix building with -fPIC.
+Subject: [PATCH 5/6] Fix building with -fPIC.
 
 ---
  lldb/cmake/modules/AddLLDB.cmake | 12 +++++-------
@@ -38,5 +38,5 @@ index 4c99278c583..3f37b1b06cc 100644
      set_target_properties(${name} PROPERTIES FOLDER "lldb plugins")
    else()
 -- 
-2.14.5
+2.22.0
 

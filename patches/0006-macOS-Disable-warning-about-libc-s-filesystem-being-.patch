@@ -1,0 +1,39 @@
+From ff40d2d2aa4ed07a35d00eb7be9e0a756526a679 Mon Sep 17 00:00:00 2001
+From: Robin Sommer <robin@icir.org>
+Date: Sun, 4 Aug 2019 12:10:31 -0700
+Subject: [PATCH 6/6] macOS: Disable warning about libc++'s filesystem being
+ available only on 10.15.
+
+We're providing a recent libc++ ourselves.
+---
+ libcxx/include/__config | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/libcxx/include/__config b/libcxx/include/__config
+index 1ecced9f479..6595ae5d508 100644
+--- a/libcxx/include/__config
++++ b/libcxx/include/__config
+@@ -1311,17 +1311,17 @@ _LIBCPP_FUNC_VIS extern "C" void __sanitizer_annotate_contiguous_container(
+      __attribute__((availability(macosx,strict,introduced=10.9)))              \
+      __attribute__((availability(ios,strict,introduced=7.0)))
+ #  define _LIBCPP_AVAILABILITY_FILESYSTEM                                      \
+-     __attribute__((availability(macosx,strict,introduced=10.15)))             \
++     // __attribute__((availability(macosx,strict,introduced=10.15)))             \
+      __attribute__((availability(ios,strict,introduced=13.0)))                 \
+      __attribute__((availability(tvos,strict,introduced=13.0)))                \
+      __attribute__((availability(watchos,strict,introduced=6.0)))
+ #  define _LIBCPP_AVAILABILITY_FILESYSTEM_PUSH                                 \
+-     _Pragma("clang attribute push(__attribute__((availability(macosx,strict,introduced=10.15))), apply_to=any(function,record))") \
++     // _Pragma("clang attribute push(__attribute__((availability(macosx,strict,introduced=10.15))), apply_to=any(function,record))") \
+      _Pragma("clang attribute push(__attribute__((availability(ios,strict,introduced=13.0))), apply_to=any(function,record))")     \
+      _Pragma("clang attribute push(__attribute__((availability(tvos,strict,introduced=13.0))), apply_to=any(function,record))")    \
+      _Pragma("clang attribute push(__attribute__((availability(watchos,strict,introduced=6.0))), apply_to=any(function,record))")
+ #  define _LIBCPP_AVAILABILITY_FILESYSTEM_POP                                  \
+-     _Pragma("clang attribute pop")                                            \
++     //_Pragma("clang attribute pop")                                            \
+      _Pragma("clang attribute pop")                                            \
+      _Pragma("clang attribute pop")                                            \
+      _Pragma("clang attribute pop")
+-- 
+2.22.0
+

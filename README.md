@@ -99,6 +99,11 @@ News
 
 * Build libunwind, and link against it.
 
+* macOS: Allow usage of libc++'s filesystem on non-10.15 systems.
+
+* macOS: Add -rpath <prefix>/lib to linker arguments (we already did
+  this for Linux).
+
 ### Version for Clang 8 (git branch `release_80`, also git `master`)
 
 The install-clang script for Clang 8.0 comes with these changes

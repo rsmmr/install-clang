@@ -1,7 +1,7 @@
-From 9f77e69e546d2378167da1c6497b49419111e1fa Mon Sep 17 00:00:00 2001
+From f72bba43ed27d1d3ea80d28398e4ce9d18f8df17 Mon Sep 17 00:00:00 2001
 From: Robin Sommer <robin@icir.org>
 Date: Sat, 27 Jul 2019 03:32:23 +0000
-Subject: [PATCH 1/5] Add a new clang-format option to insert spaces around
+Subject: [PATCH 1/6] Add a new clang-format option to insert spaces around
  conditions.
 
 SpacesAroundConditions (bool)
@@ -135,5 +135,5 @@ index c1cec110137..a461fac8a5d 100644
  } // end namespace format
  } // end namespace clang
 -- 
-2.14.5
+2.22.0
 

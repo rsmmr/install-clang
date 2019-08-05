@@ -1,14 +1,14 @@
 install-clang
 =============
 
-This script installs self-contained standalone 8.0 versions of [clang][1],
+This script installs self-contained standalone 9.0 versions of [clang][1],
 [LLVM][2], [libc++][3], [compiler-rt][4], [libc++abi][5], [lldb][6],
 and [lld][7], on macOS and Linux, including linking clang and LLVM
 against libc++ themselves as well. The script keeps all of the
-installation within a given target prefix (e.g., `/opt/llvm`), and
+installation within a given target prefix (e.g., `/opt/clang`), and
 hence separate from any already installed compilers, libraries, and
 include files. In particular, you can later uninstall everything
-easily by just deleting, e.g., `/opt/llvm`. Furthermore, as long as
+easily by just deleting, e.g., `/opt/clang`. Furthermore, as long as
 the prefix path is writable, the installation doesn't need root
 privileges.
 
@@ -39,9 +39,9 @@ To see the available options, use `-h`:
         CXX        path to the C++ compiler for bootstrapping
 
 For example, to build Clang on a machine with multiple cores and
-install it in `/opt/llvm`, you can use:
+install it in `/opt/clang`, you can use:
 
-    > ./install-clang -j 16 /opt/llvm
+    > ./install-clang -j 16 /opt/clang
 
 Once finished, just prefix your PATH with `<prefix>/bin` and you're
 ready to use the new binaries:
@@ -49,18 +49,18 @@ ready to use the new binaries:
     > clang++ --std=c++11 --stdlib=libc++ test.cc -o a.out && ./a.out
     Hello, Clang!
 
-By default, install-clang currently installs the 8.0 release branches
-of the relevant llvm.org projects. Adding `-m` on the command line
-instructs the script to use the current git master versions instead.
-The script downloads all the sources from the corresponding git
-repositories and compiles the pieces as needed. Other OSs than macOS,
-and Linux are not currently supported.
+By default, install-clang currently installs the 9.0 release branch of
+https://github.com/llvm (the "mono repository"). Adding `-m` on the
+command line instructs the script to use the current git master
+version instead. The script downloads the source code from GitHub and
+compiles the pieces as needed. Other OSs than macOS and Linux are not
+currently supported.
 
 The script also has an update option `-u` that allows for catching up
 with upstream repository changes without doing the complete
 compile/install-from-scratch cycle again. Note, however, that unless
 coupled with `-m`, this flag has no immediate effect since the git
-versions to use are hardcoded to the Clang/LLVM release versions.
+versions to use are hardcoded to the Clang/LLVM release version.
 
 Doing a self-contained Clang installation is a bit more messy
 than one would hope because the projects make assumptions about
@@ -76,7 +76,7 @@ Docker
 ------
 
 install-clang comes with a Dockerfile to build a Docker image, based
-on Ubuntu, with Clang then in /opt/llvm:
+on Ubuntu, with Clang then in /opt/clang:
 
     # make docker-build && make docker-run
     [... get a beer ...]
@@ -92,7 +92,7 @@ A prebuilt image is available at https://hub.docker.com/r/rsmmr/clang/ .
 News
 ----
 
-### Version for Clang 9 (in progress; git branch `release_90`)
+### Version for Clang 9 (master; git branch `release_90`)
 
 * Switch to using the LLVM "mono repo" and adapt script's build
   process.
@@ -175,7 +175,7 @@ compared to earlier version:
   already.
 
 * There's now a Dockerfile to build an image with Clang/LLVM in
-  /opt/llvm.
+  /opt/clang.
 
 [1]: http://clang.llvm.org
 [2]: http://www.llvm.org

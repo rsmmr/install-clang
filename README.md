@@ -92,7 +92,7 @@ A prebuilt image is available at https://hub.docker.com/r/rsmmr/clang/ .
 News
 ----
 
-### Version for Clang 9 (master; git branch `release_90`)
+### Version for Clang 9 (master)
 
 * Switch to using the LLVM "mono repo" and adapt script's build
   process.
@@ -101,10 +101,10 @@ News
 
 * macOS: Allow usage of libc++'s filesystem on non-10.15 systems.
 
-* macOS: Add -rpath <prefix>/lib to linker arguments (we already did
+* macOS: Add `-rpath <prefix>/lib` to linker arguments (we already did
   this for Linux).
 
-### Version for Clang 8 (git branch `release_80`, also git `master`)
+### Version for Clang 8 (git branch `release_80`)
 
 The install-clang script for Clang 8.0 comes with these changes
 compared to the 6.0 version:

@@ -25,10 +25,11 @@ To see the available options, use `-h`:
 
     Available options:
         -A         enables assertions in LLVM libraries
-        -b         build type (Release, Debug, RelWithDebInfo) [default: RelWithDebInfo]
+        -b         build type (Release, Debug, RelWithDebInfo) [default: Release]
         -c         skip cloning repositories, assume they are in place
+        -C         clean up after build by deleting the LLVM/clang source/build directories
         -h|-?      display this help
-        -j <n>     build with <n> threads in parallel [default: 1]
+        -j <n>     build with <n> threads in parallel [default: 4]
         -m         use git/master instead of preconfigured versions
         -s <stage> begin build from <stage> [0, 1, 2]
         -S         build, and link against, shared libraries (this is the default on macOS)

@@ -82,8 +82,8 @@ index 490c4f46135..75a01152be3 100644
 +  if (Style.SpacesAroundConditions) {
 +    const auto is_cond_kw = [&](const FormatToken *t) {
 +      return t->isOneOf(tok::kw_if, tok::pp_elif, tok::kw_for, tok::kw_while,
-+                        tok::kw_switch, tok::kw_constexpr, Keywords.kw_assert,
-+                        tok::kw_static_assert, TT_ForEachMacro);
++                        tok::kw_switch, tok::kw_constexpr,
++                        TT_ForEachMacro);
 +    };
 +    if (Left.is(tok::l_paren) && Left.Previous && is_cond_kw(Left.Previous) )
 +      return true;

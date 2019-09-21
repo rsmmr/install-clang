@@ -318,7 +318,7 @@ test ${perform_lldb_build} = 1 && projects_stage2="${projects_stage2};lldb"
 test ${perform_lld_build} = 1 && projects_stage2="${projects_stage2};lld"
 test ${perform_extra_build} = 1 && projects_stage2="${projects_stage2};clang-tools-extra"
 
-CMAKE_common="-DBUILD_SHARED_LIBS=${build_shared_libs} -DLLVM_TARGETS_TO_BUILD=${targets}"
+CMAKE_common="${CMAKE_common} -DBUILD_SHARED_LIBS=${build_shared_libs} -DLLVM_TARGETS_TO_BUILD=${targets}"
 CMAKE_stage0="${CMAKE_common} ${CMAKE_stage0} -DLLVM_ENABLE_PROJECTS=${projects_stage0}"
 CMAKE_stage1="${CMAKE_common} ${CMAKE_stage1} -DLLVM_ENABLE_PROJECTS=${projects_stage1} -DLIBCXXABI_USE_LLVM_UNWINDER=YES -DLLVM_ENABLE_ASSERTIONS=${assertions}"
 CMAKE_stage2="${CMAKE_common} ${CMAKE_stage2} -DLLVM_ENABLE_PROJECTS=${projects_stage2} -DLIBCXXABI_USE_LLVM_UNWINDER=YES -DLLVM_ENABLE_ASSERTIONS=${assertions}"

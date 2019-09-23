@@ -300,7 +300,11 @@ if [ "$OS" == "Darwin" ]; then
     CMAKE_stage1="-DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++"
 
 elif [ "$OS" == "Linux" ]; then
-    CMAKE_common="-DLLVM_LIBDIR_SUFFIX=64" # lldb needs this
+    # lldb cannot figure this out itself (lib/ vs lib64/).
+    pylibdirsuffix=$(python -c 'from distutils import sysconfig
+print(sysconfig.get_config_var("LIBDIR"))' | sed 's#.*/lib\([^/]*\)$#\1#g')
+    CMAKE_common="-DLLVM_LIBDIR_SUFFIX=${pylibdirsuffix}"
+
     CMAKE_stage1="-DLIBCXX_ENABLE_STATIC_ABI_LIBRARY=on -DLIBCXX_ENABLE_ABI_LINKER_SCRIPT=off -DLIBCXXABI_ENABLE_SHARED=off"
     CMAKE_stage2=$CMAKE_stage1
     default_includes=$(add_include_path features.h /usr/include)
@@ -310,7 +314,7 @@ else
     exit 1
 fi
 
-projects_stage0="clang;libcxx"
+projects_stage0="clang"
 projects_stage1="clang;libcxx;compiler-rt;libcxxabi;libunwind"
 projects_stage2="clang;libcxx;compiler-rt;libcxxabi;libunwind"
 

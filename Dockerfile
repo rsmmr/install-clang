@@ -8,7 +8,7 @@ ENV PATH /opt/clang/bin:$PATH
 CMD bash
 
 # Setup packages.
-RUN apt-get update && apt-get -y install cmake git build-essential vim python libncurses5-dev libedit-dev libpthread-stubs0-dev
+RUN apt-get update && apt-get -y install cmake git build-essential vim python python-dev swig libncurses5-dev libedit-dev libpthread-stubs0-dev
 
 # Copy install-clang over.
 ADD . /opt/install-clang

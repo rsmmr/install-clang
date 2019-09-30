@@ -1,7 +1,7 @@
-From 2bfe354abbebac3a10c0540d73e93d7f34f62b10 Mon Sep 17 00:00:00 2001
+From 186ac0e2d43a952b1eb68fd171ce7c33c7faa4b9 Mon Sep 17 00:00:00 2001
 From: Robin Sommer <robin@icir.org>
 Date: Sat, 27 Jul 2019 03:32:54 +0000
-Subject: [PATCH 2/6] Adapting linker arguments.
+Subject: [PATCH] Adapting linker arguments.
 
 - Adding -L<prefix>/lib to default linker arguments.
 - On Linux, add -rpath.
@@ -10,7 +10,7 @@ Subject: [PATCH 2/6] Adapting linker arguments.
  1 file changed, 7 insertions(+)
 
 diff --git a/clang/lib/Driver/ToolChains/CommonArgs.cpp b/clang/lib/Driver/ToolChains/CommonArgs.cpp
-index 99691cb43dc..3eb8199fbc2 100644
+index 99691cb43dc..01be5ae7644 100644
 --- a/clang/lib/Driver/ToolChains/CommonArgs.cpp
 +++ b/clang/lib/Driver/ToolChains/CommonArgs.cpp
 @@ -188,6 +188,13 @@ void tools::AddLinkerInputs(const ToolChain &TC, const InputInfoList &Inputs,
@@ -19,7 +19,7 @@ index 99691cb43dc..3eb8199fbc2 100644
    }
 +
 +  if (!TC.isCrossCompiling()) {
-+    std::string lib_dir = llvm::sys::path::parent_path(TC.getDriver().Dir).str() + "/lib";
++    std::string lib_dir = llvm::sys::path::parent_path(TC.getDriver().Dir).str() + "/lib" + CLANG_LIBDIR_SUFFIX;
 +    CmdArgs.push_back(Args.MakeArgString("-L" + lib_dir));
 +    CmdArgs.push_back("-rpath");
 +    CmdArgs.push_back(Args.MakeArgString(lib_dir));
@@ -28,5 +28,5 @@ index 99691cb43dc..3eb8199fbc2 100644
  
  void tools::AddTargetFeature(const ArgList &Args,
 -- 
-2.22.0
+2.14.5
 

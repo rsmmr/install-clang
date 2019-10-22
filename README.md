@@ -119,10 +119,8 @@ compared to the 6.0 version:
 * On macOS, we now set clang's DEFAULT_SYSROOT to the current macOS
   SDK.
 
-* We apply a custom clang-format patch that adds a
-  `SpacesAroundConditions` option.
-
-* We backport clang-format's new option `SpaceAfterLogicalNot` from git.
+* We backport clang-format's new options `SpaceAfterLogicalNot` and
+  `SpacesInConditionalStatement` from git.
 
 * We build, and link against, static libraries by default (just as
   LLVM does), except on macOS. Option -S switches back to shared
